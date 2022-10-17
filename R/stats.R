@@ -481,7 +481,7 @@ do_limma <- function(data, groups, expdes, g2 = NULL, sel_assay = 1,
     # Remove nodes with 0 variance
     vars <- apply(vals, 1, var)
     novar <- vals[-which(vars == 0),]
-    
+
     # Do analysis
     fit <- limma::lmFit(novar, design)
     fit1 <- limma::contrasts.fit(fit, cont_matrix)
@@ -495,7 +495,7 @@ do_limma <- function(data, groups, expdes, g2 = NULL, sel_assay = 1,
     ttnovar <- ttnovar[,-1]
     tt <- rbind(tt, ttnovar)
     tt <- tt[rownames(vals),]
-    
+
     # Create results data frame
     updown <- c("UP", "DOWN", "UP")
     names(updown) <- c("1", "-1", "0")
