@@ -70,10 +70,10 @@ translate_ids <- function(ids, xref){
 #' Translates the IDs in the rownames of a SummarizedExperiment to Entrez IDs.
 #' For accepted IDs to be transformed see the DOCUMENTATION.
 #'
-#' @param data Either a SummarizedExperiment object or a matrix of gene 
+#' @param data Either a SummarizedExperiment object or a matrix of gene
 #' expression.
 #' @param species Species of the samples.
-#' @param sel_assay Character or integer, indicating the assay to be translated 
+#' @param sel_assay Character or integer, indicating the assay to be translated
 #' in the SummarizedExperiment. Default is 1.
 #' @param verbose Boolean, whether to show details about the results of the
 #' execution.
@@ -81,7 +81,7 @@ translate_ids <- function(ids, xref){
 #' @examples data("brca_data")
 #' trans_data <- translate_data(brca_data, "hsa")
 #'
-#' @return Either a SummarizedExperiment or a matrix (depending on the input 
+#' @return Either a SummarizedExperiment or a matrix (depending on the input
 #' type) of gene expression with Entrez IDs as rownames.
 #'
 #' @export
@@ -90,7 +90,7 @@ translate_ids <- function(ids, xref){
 #' @importFrom methods is
 #'
 translate_data <- function(data, species, sel_assay = 1, verbose=TRUE){
-    
+
     if(is(data, "SummarizedExperiment")){
         se_flag <- TRUE
         mat <- assay(data, sel_assay)
@@ -102,7 +102,7 @@ translate_data <- function(data, species, sel_assay = 1, verbose=TRUE){
     }
     trans_mat <- translate_matrix(mat, species)
     if(se_flag == TRUE)
-        trans_mat <- SummarizedExperiment(list(trans = trans_mat), 
+        trans_mat <- SummarizedExperiment(list(trans = trans_mat),
                                      colData = colData(data))
     return(trans_mat)
 }
@@ -254,20 +254,20 @@ get_path_names <- function(metaginfo, names, maxchar=NULL){
 #' @export
 #'
 get_node_names <- function(metaginfo, names, maxchar=NULL){
-    
+
     labels <- metaginfo$all.labelids
-    
+
     prettynames <- unlist(lapply(names, function(name){
         label <- as.matrix(labels)[name, c("path.name", "label")]
         label <- paste(label, collapse = ": ")
         label
      }))
-    
+
     if(!is.null(maxchar))
         prettynames <- clip_names(prettynames, maxchar = maxchar)
-    
+
     return(prettynames)
-    
+
 }
 
 
@@ -290,7 +290,7 @@ get_node_names <- function(metaginfo, names, maxchar=NULL){
 #' @export
 #'
 get_go_names <- function(names, species, maxchar=NULL){
-    
+
     gos <- load_annots("GO", species)
     if(ncol(gos) == 3){
         gos <- unique(gos[,c(2,3)])
@@ -299,12 +299,12 @@ get_go_names <- function(names, species, maxchar=NULL){
     }else{
         gonames <- names
     }
-    
+
     if(!is.null(maxchar))
         gonames <- clip_names(gonames, maxchar = maxchar)
-    
+
     return(gonames)
-    
+
 }
 
 
@@ -465,16 +465,16 @@ all_needed_genes <- function(pathigraphs){
 #' in as many decomposed subpathways as initial nodes it includes.
 #'
 #' @param results Results object as returned by \code{hipathia}.
-#' @param matrix Boolean, if TRUE the function returns a matrix object, if 
+#' @param matrix Boolean, if TRUE the function returns a matrix object, if
 #' FALSE (as default) returns a SummarizedExperiment object.
 #'
 #' @examples
 #' data(results)
 #' path_vals <- get_paths_data(results)
 #'
-#' @return Object, either a SummarizedExperiment or a matrix, with the levels 
+#' @return Object, either a SummarizedExperiment or a matrix, with the levels
 #' of activation of each decomposed subpathway for each sample.
-#' 
+#'
 #' @export
 #' @import SummarizedExperiment
 #'
@@ -511,16 +511,16 @@ get_paths_data <- function(results, matrix = FALSE){
 #' in as many decomposed subpathways as initial nodes it includes.
 #'
 #' @param results Results object as returned by \code{hipathia}.
-#' @param matrix Boolean, if TRUE the function returns a matrix object, if 
+#' @param matrix Boolean, if TRUE the function returns a matrix object, if
 #' FALSE (as default) returns a SummarizedExperiment object.
 #'
 #' @examples
 #' data(results)
 #' path_vals <- get_paths_data(results)
 #'
-#' @return Object, either a SummarizedExperiment or a matrix, with the levels 
+#' @return Object, either a SummarizedExperiment or a matrix, with the levels
 #' of activation of each decomposed subpathway for each sample.
-#' 
+#'
 #' @export
 #' @import SummarizedExperiment
 #'
@@ -576,7 +576,7 @@ add_missing_genes <- function(exp_data, genes, default = NULL){
 #'
 #' @param mat Object to be shown
 #' @param n Number of rows and columns
-#' @param sel_assay Character or integer, indicating the assay to be translated 
+#' @param sel_assay Character or integer, indicating the assay to be translated
 #' in the SummarizedExperiment. Default is 1.
 #'
 #' @examples mat <- matrix(rnorm(100), ncol = 10)
@@ -862,7 +862,7 @@ paths_to_go_ancestor <- function(pathways, comp_paths, comp_go, pval = 0.05){
 #' @param path_vals SummarizedExperiment or matrix of the pathway values
 #' @param metaginfo Pathways object
 #'
-#' @return SummarizedExperiment or matrix of normalized pathway values, 
+#' @return SummarizedExperiment or matrix of normalized pathway values,
 #' depending on the class of \code{path_vals}.
 #'
 #' @examples
@@ -892,9 +892,9 @@ normalize_paths <- function(path_vals, metaginfo){
                                 by_gene = FALSE,
                                 percentil = FALSE)
     if(se_flag == TRUE)
-        path_norm <- SummarizedExperiment(list(path_norm = path_norm), 
+        path_norm <- SummarizedExperiment(list(path_norm = path_norm),
                                           colData = coldata)
-    
+
     return(path_norm)
 }
 
@@ -912,3 +912,39 @@ is_decomposed <- function(ids){
     return(decomposed)
 }
 
+get_path_nodes <- function(metaginfo, path.names){
+    pathnodes <- sapply(path.names, function(name){
+        pathway <- unlist(strsplit(name, "-"))[2]
+        nodes <- V(metaginfo$pathigraphs[[pathway]]$effector.subgraphs[[name]])$name
+        allnodes <- paste(nodes, collapse = ", ")
+    })
+}
+
+get_measured_nodes <- function(hidata){
+    pathnodes <- rowData(hidata[["paths"]])$path.nodes
+    ismeasured <- !rowData(hidata[["nodes"]])$node.var == 0
+    notcompound <- !rowData(hidata[["nodes"]])$node.type.type == "compound"
+    names(notcompound) <- rownames(rowData(hidata[["nodes"]]))
+    measured <- lapply(pathnodes, function(pathnode){
+        nodes <- unlist(strsplit(pathnode, ", "))
+        notcnodes <- nodes[notcompound[nodes]]
+        df <- data.frame(label = names(pathnode),
+                         num.nodes = length(nodes),
+                         num.gene.nodes = length(notcnodes),
+                         num.measured.nodes = sum(ismeasured[notcnodes]))
+    })
+    return(measured)
+}
+
+get_node_type <- function(metaginfo){
+    types <- c("compound", "gene")
+    names(types) <- c("circle", "rectangle")
+    df <- lapply(metaginfo$pathigraphs, function(pg){
+        d <- data.frame(name = V(pg$graph)$name,
+                         label = V(pg$graph)$label,
+                         type = types[V(pg$graph)$shape])
+        d <- filter(d, !grepl("_func", d$name))
+    })
+    alltypes <- do.call(rbind, df)
+    return(alltypes)
+}

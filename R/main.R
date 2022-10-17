@@ -8,17 +8,17 @@
 ## https://www.bioconductor.org/developers/how-to/coding-style/
 ##
 
-#' Computes the level of activation of the subpathways for each 
+#' Computes the level of activation of the subpathways for each
 #' of the samples
 #'
 #' #@importFrom igraph
 #'
-#' @param genes_vals A SummarizedExperiment or matrix with the normalized 
-#' expression values of the genes. Rows represent genes and columns represent 
+#' @param genes_vals A SummarizedExperiment or matrix with the normalized
+#' expression values of the genes. Rows represent genes and columns represent
 #' samples. Rownames() must be accepted gene IDs.
 #' @param metaginfo Pathways object
-#' @param sel_assay Character or integer, indicating the assay to be processed 
-#' in the SummarizedExperiment. Only applied if \code{genes_vals} is a 
+#' @param sel_assay Character or integer, indicating the assay to be processed
+#' in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 #' \code{SummarizedExperiment}.Default is 1.
 #' @param decompose Boolean, whether to compute the values for the decomposed
 #' subpathways. By default, effector subpathways are computed.
@@ -30,7 +30,7 @@
 #' iterating the signal through the loops into the pathways
 #' @param test Boolean, whether to test the input objects. Default is TRUE.
 #'
-#' @return A MultiAssayExperiment object with the level of activation of the 
+#' @return A MultiAssayExperiment object with the level of activation of the
 #' subpathways from
 #' the pathways in \code{pathigraphs} for the experiment
 #' with expression values in \code{genes_vals}.
@@ -40,7 +40,7 @@
 #' pathways <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
 #' "hsa04012"))
 #' results <- hipathia(exp_data, pathways, verbose = TRUE)
-#' \dontrun{results <- hipathia(exp_data, pathways, decompose = TRUE, 
+#' \dontrun{results <- hipathia(exp_data, pathways, decompose = TRUE,
 #' verbose = FALSE)}
 #'
 #' @export
@@ -49,7 +49,9 @@
 #' @importFrom S4Vectors DataFrame
 #' @importFrom methods is
 #'
-hipathia <- function(genes_vals, metaginfo, sel_assay = 1, decompose = FALSE, 
+hipathia <- function(genes_vals, metaginfo,
+                     uni.terms = FALSE, GO.terms = FALSE,
+                     sel_assay = 1, decompose = FALSE,
                      maxnum = 100, verbose = TRUE, tol = 0.000001, test = TRUE){
 
     if(is(genes_vals, "SummarizedExperiment")){
@@ -73,7 +75,7 @@ hipathia <- function(genes_vals, metaginfo, sel_assay = 1, decompose = FALSE,
     results <- list()
 
     if(verbose == TRUE)
-        cat("HiPathia processing...\n")
+        cat("Computing pathway...\n")
 
     results$by.path <- lapply(pathigraphs, function(pathigraph){
 
@@ -100,22 +102,46 @@ hipathia <- function(genes_vals, metaginfo, sel_assay = 1, decompose = FALSE,
         return(res)
     })
 
-    paths <- do.call("rbind", lapply(results$by.path, function(x) x$path.vals))
+    # Nodes
     nodes <- do.call("rbind", lapply(results$by.path, function(x) x$nodes.vals))
-    
-    paths_rd <- DataFrame(feat.ID = rownames(paths), 
-                          feat.name = get_path_names(metaginfo, 
-                                                        rownames(paths)),
+    nodes_rd <- DataFrame(metaginfo$all.labelids[rownames(nodes),],
+                          node.name = get_node_names(metaginfo, rownames(nodes)),
+                          node.type = get_node_type(metaginfo)$node.type,
+                          node.var = apply(nodes, 1, var))
+    nodes_se <- SummarizedExperiment(list(nodes = nodes), rowData = nodes_rd,
+                                     colData = coldata)
+
+    # Pathways
+    paths <- do.call("rbind", lapply(results$by.path, function(x) x$path.vals))
+    paths_rd <- DataFrame(path.ID = rownames(paths),
+                          path.name = get_path_names(metaginfo,
+                                                     rownames(paths)),
+                          path.nodes = get_path_nodes(metaginfo,
+                                                      rownames(paths)),
                           decomposed = decompose)
-    nodes_rd <- as.data.frame(metaginfo$all.labelids[rownames(nodes),], 
-                              stringsAsFactors = FALSE)
-        
-    paths_se <- SummarizedExperiment(list(paths = paths), rowData = paths_rd, 
+    paths_se <- SummarizedExperiment(list(paths = paths), rowData = paths_rd,
                                      colData = coldata)
-    nodes_se <- SummarizedExperiment(list(nodes = nodes), rowData = nodes_rd, 
-                                     colData = coldata)
-    resmae <- MultiAssayExperiment(list(paths = paths_se, nodes = nodes_se))
-    
+
+    se_list <- list(nodes = nodes_se, paths = paths_se)
+
+    # FUNCTIONS
+    # Uniprot
+    if(uni.terms == TRUE){
+        if(verbose == TRUE)
+            cat("\nComputing Uniprot terms...\n")
+        unis_se <- quantify_funs(paths_se, metaginfo, "uniprot")
+        se_list$uni.terms <- unis_se
+    }
+    # GO
+    if(GO.terms == TRUE){
+        if(verbose == TRUE)
+            cat("\nComputing GO terms...\n")
+        gos_se <- quantify_funs(paths_se, metaginfo, "GO")
+        se_list$GO.terms <- gos_se
+    }
+
+    resmae <- MultiAssayExperiment(se_list)
+
     return(resmae)
 }
 

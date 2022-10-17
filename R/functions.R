@@ -70,7 +70,7 @@ annotate_paths <- function(metaginfo, dbannot){
 #' use ("uniprot" for Uniprot Keywords or "GO" for Gene Ontology terms), or
 #' a dataframe with the annotation of the genes to the functions. First
 #' column are gene symbols, second column the functions.
-#' @param out_matrix Boolean, whther the output object should be a matrix 
+#' @param out_matrix Boolean, whther the output object should be a matrix
 #' object. Default is FALSE, returning a SummarizedExperiment object.
 #' @param normalize Boolean, whether to normalize the matrix of pathway
 #' values with \code{normalize_paths} before quantifying the signal. Due to
@@ -92,17 +92,29 @@ annotate_paths <- function(metaginfo, dbannot){
 #' @importFrom matrixStats colMeans2
 #' @importFrom matrixStats colProds
 #'
-quantify_terms <- function(results, metaginfo, dbannot, out_matrix = FALSE, 
+quantify_terms <- function(results, metaginfo, dbannot, out_matrix = FALSE,
+                           normalize = TRUE){
+
+    fun_vals <- quantify_funs(results[["paths"]],
+                             metaginfo = metaginfo,
+                             dbannot = dbannot,
+                             out_matrix = out_matrix,
+                             normalize = normalize)
+    return(fun_vals)
+
+}
+
+quantify_funs <- function(paths_se, metaginfo, dbannot, out_matrix = FALSE,
                            normalize = TRUE){
 
     method = "mean"
     species <- metaginfo$species
-    path_vals <- assay(results[["paths"]])
+    path_vals <- assay(paths_se)
     first <- rownames(path_vals)[1]
     decomposed <- is_decomposed_matrix(path_vals)
     if(decomposed == TRUE)
         stop("Function terms can only be computed from NOT decomposed subpaths")
-    
+
     if(is.character(dbannot) & length(dbannot) == 1){
         annofuns <- load_annofuns(dbannot, species)
     }else{
@@ -120,11 +132,13 @@ quantify_terms <- function(results, metaginfo, dbannot, out_matrix = FALSE,
                        ncol = ncol(path_vals),
                        nrow = length(fun_names),
                        dimnames = list(fun_names, colnames(path_vals)))
-    message("Quantified functions: ", nrow(fun_vals))
+    dbname <- ifelse(is.character(dbannot) & length(dbannot) == 1,
+                     ifelse(dbannot == "uniprot", "Uniprot", dbannot), "")
+    message("Quantified ", dbname, " terms: ", nrow(fun_vals))
     for(fun in fun_names){
         paths <- annofuns$paths[annofuns$funs == fun]
         if(method == "mean"){
-            fun_vals[fun,] <- colMeans2(path_vals[paths,,drop = FALSE], 
+            fun_vals[fun,] <- colMeans2(path_vals[paths,,drop = FALSE],
                                         na.rm = TRUE)
         }else if(method == "signal"){
             minimat <- 1 - path_vals[paths,,drop = FALSE]
@@ -132,22 +146,23 @@ quantify_terms <- function(results, metaginfo, dbannot, out_matrix = FALSE,
         }
     }
     if(out_matrix == FALSE){
-        cd <- colData(results[["paths"]])
+        cd <- colData(paths_se)
         if(is.character(dbannot) & length(dbannot) == 1 & dbannot == "GO"){
-            rd <- DataFrame(feat.name = get_go_names(rownames(fun_vals), 
-                                                     metaginfo$species, 
+            rd <- DataFrame(feat.name = get_go_names(rownames(fun_vals),
+                                                     metaginfo$species,
                                                      maxchar = 50))
-            fun_vals <- SummarizedExperiment(list(terms = fun_vals), 
-                                             colData = cd, 
+            fun_vals <- SummarizedExperiment(list(terms = fun_vals),
+                                             colData = cd,
                                              rowData = rd)
         }else{
-            fun_vals <- SummarizedExperiment(list(terms = fun_vals), 
+            fun_vals <- SummarizedExperiment(list(terms = fun_vals),
                                              colData = cd)
         }
     }
     return(fun_vals)
-    
+
 }
+
 
 get_entrez_function <- function(entrezs, entrez2hgnc, dbannot){
     hgncs <- entrez2hgnc[entrez2hgnc[,1] %in% entrezs,2]
