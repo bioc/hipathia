@@ -106,7 +106,7 @@ hipathia <- function(genes_vals, metaginfo,
     nodes <- do.call("rbind", lapply(results$by.path, function(x) x$nodes.vals))
     nodes_rd <- DataFrame(metaginfo$all.labelids[rownames(nodes),],
                           node.name = get_node_names(metaginfo, rownames(nodes)),
-                          node.type = get_node_type(metaginfo)$node.type,
+                          node.type = get_node_type(metaginfo)$type,
                           node.var = apply(nodes, 1, var))
     nodes_se <- SummarizedExperiment(list(nodes = nodes), rowData = nodes_rd,
                                      colData = coldata)

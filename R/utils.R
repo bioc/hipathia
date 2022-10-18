@@ -923,17 +923,21 @@ get_path_nodes <- function(metaginfo, path.names){
 get_measured_nodes <- function(hidata){
     pathnodes <- rowData(hidata[["paths"]])$path.nodes
     ismeasured <- !rowData(hidata[["nodes"]])$node.var == 0
-    notcompound <- !rowData(hidata[["nodes"]])$node.type.type == "compound"
+    notcompound <- !rowData(hidata[["nodes"]])$node.type == "compound"
     names(notcompound) <- rownames(rowData(hidata[["nodes"]]))
-    measured <- lapply(pathnodes, function(pathnode){
+    measured <- lapply(seq_along(pathnodes), function(i){
+        pathnode <- pathnodes[i]
         nodes <- unlist(strsplit(pathnode, ", "))
         notcnodes <- nodes[notcompound[nodes]]
         df <- data.frame(label = names(pathnode),
                          num.nodes = length(nodes),
                          num.gene.nodes = length(notcnodes),
-                         num.measured.nodes = sum(ismeasured[notcnodes]))
+                         num.measured.nodes = sum(ismeasured[notcnodes]),
+                         ratio.measured.gene.nodes = sum(ismeasured[notcnodes])/length(notcnodes))
     })
-    return(measured)
+    mesdf <- do.call(rbind, measured)
+    rownames(mesdf) <- mesdf$label
+    return(mesdf)
 }
 
 get_node_type <- function(metaginfo){
