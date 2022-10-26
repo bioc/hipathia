@@ -940,6 +940,22 @@ get_measured_nodes <- function(hidata){
     return(mesdf)
 }
 
+
+get_altered_nodes <- function(hidata, node.comp, conf.level){
+    pathnodes <- rowData(hidata[["paths"]])$path.nodes
+    altered <- lapply(seq_along(pathnodes), function(i){
+        pathnode <- pathnodes[i]
+        nodes <- unlist(strsplit(pathnode, ", "))
+        altnodes <- node.comp[node.comp$ID %in% nodes & node.comp$FDRp.value < conf.level, "ID"]
+        alttib <- data.frame(path = names(pathnode),
+                         N.DA.nodes = nrow(altnodes),
+                         DA.nodes = paste(altnodes$ID, collapse = ", "))
+    })
+    alt <- do.call(rbind, altered)
+    rownames(alt) <- alt$path
+    return(alt)
+}
+
 get_node_type <- function(metaginfo){
     types <- c("compound", "gene")
     names(types) <- c("circle", "rectangle")
