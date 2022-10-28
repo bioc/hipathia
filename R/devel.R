@@ -363,13 +363,13 @@ get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
     return(edgestatus)
 }
 
-prepare_edges_pVG <- function(DApaths, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_DAedges <- function(DApaths, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
     require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
     # Define colors
     cols <- define_colors(colors)
-    color.edge.type <- c(cols$up, cols$down, "darkgray", "gray", "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
+    color.edge.type <- c(cols$up, cols$down, "#987975", "lightgray", "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
     names(color.edge.type) <- c("UP", "DOWN", "Both", "None", "function")
 
     # Create edges tibble
@@ -393,13 +393,14 @@ prepare_edges <- function(name, pathways, colors = "classic", conf = 0.05, adjus
     edges <- get_edges_df(pg$graph) %>%
         mutate(functional = grepl("_func", to),
                width = ifelse(functional, 1, 10),
+               color = "lightgray",
                arrows = ifelse(functional, "none", "to"),
                # hidden = functional,
                dashed = E(pg$graph)$relation == -1)
     return(edges)
 }
 
-prepare_nodes_pVG <- function(DAnodes, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_DAnodes <- function(DAnodes, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
 
     g <- pathways$pathigraphs[[name]]$graph
 
@@ -412,7 +413,7 @@ prepare_nodes_pVG <- function(DAnodes, name, pathways, colors = "classic", conf 
                                   pv,
                                   up_col = cols$up,
                                   down_col = cols$down,
-                                  no_col = cols$no,
+                                  no_col = "#d0f2ef",
                                   conf = conf)
     names(color) <- DAnodes$ID
     toadd <- V(g)$name[!V(g)$name %in% names(color)]
@@ -471,19 +472,21 @@ prepare_nodes <- function(name, pathways, colors = "classic", conf = 0.05, adjus
 
 plotVG <- function(name, pathways, DAdata = NULL, colors = "classic",
                    conf = 0.05, adjust = TRUE, main = "Pathway",
-                   submain = "Differential activation plot"){
+                   submain = ""){
 
     if(is.null(DAdata)){
         nodes <- prepare_nodes(name, pathways, colors, conf, adjust)
         edges <- prepare_edges(name, pathways, colors, conf, adjust)
+        submain <- "KEGG database"
     }else{
-        nodes <- prepare_nodes_pVG(DAdata[["nodes"]], name, pathways, colors, conf, adjust)
-        edges <- prepare_edges_pVG(DAdata[["paths"]], name, pathways, colors, conf, adjust)
+        nodes <- prepare_DAnodes(DAdata[["nodes"]], name, pathways, colors, conf, adjust)
+        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, colors, conf, adjust)
+        submain <- "Differential activation plot"
     }
 
     pname <- pathways$pathigraphs[[name]]$path.name
 
-    plotVisGraphDE(nodes, edges, main = pname)
+    plotVisGraphDE(nodes, edges, main = pname, submain = submain)
 }
 
 
@@ -502,7 +505,7 @@ plotVisGraphDE <- function(nodes, edges, main = "Pathway", submain = "Differenti
                                border = "#d0f2ef",
                                highlight = list(background = "#ff9368",
                                                 border = "#e4882e")),
-                  # font = list(color = "white"),
+                  font = list(color = "#316B8F"),
                   labelHighlightBold = FALSE,
                   shadow = list(enabled = TRUE,
                                 size = 5)) %>%
@@ -518,7 +521,7 @@ plotVisGraphDE <- function(nodes, edges, main = "Pathway", submain = "Differenti
                                 size = 5)) %>%
         visGroups(groupname = "metabolite",
                   shape = "square",
-                  color = "#e4882e",
+                  color = "#d0f2ef",
                   shadow = FALSE) %>%
         visGroups(groupname = "function",
                   shape = "text",
