@@ -261,7 +261,6 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F){
     }
     print(all)
 }
-# summary_plot(Psumm)
 
 
 nsig_plot <- function(summ){
@@ -281,28 +280,11 @@ nsig_plot <- function(summ){
         theme_minimal() +
         theme(legend.position = "left")
 
-    # Coord polars
-    # summ <- mutate(summ, Not = (Total - UP - DOWN)/Total,
-    #                UP = UP/Total,
-    #                DOWN = DOWN/Total)
-    # data <- melt(select(summ, feature, Not, UP, DOWN))
-    # data$feature <- factor(data$feature, levels = unique(data$feature))
-    # g <- ggplot(data, aes(x = "", y = value, fill = variable)) +
-    #     geom_bar(stat = "identity") +
-    #     coord_polar("y", start = 0) +
-    #     facet_wrap(~feature) +
-    #     scale_fill_manual(name = "Type", values = palette) +
-    #     ylab("") +
-    #     xlab("Feature") +
-    #     ggtitle("Results summary") +
-    #     theme_minimal() +
-    #     theme(legend.position = "left")
-
-        print(g)
+    print(g)
     return(g)
 }
 
-define_colors <- function(colors){
+define_colors <- function(colors, no.col = NULL){
     if(length(colors) == 1){
         if(colors == "hipathia"){
             colors <- c("#50b7ae", "white", "#f16a34")
@@ -316,12 +298,15 @@ define_colors <- function(colors){
             colors <- c("#089099", "#eee8a9", "#ff8a43")
         }else if(colors == "edges"){
             colors <- c("#447fdd", "gray", "#da6c42")
+        }else if(colors == "vg"){
+            colors <- c("#60a8ff", "#ff9368")
         }
     }
     down_col <- colors[1]
-    no_col <- colors[2]
-    up_col <- colors[3]
-    return(list(down = down_col, no = no_col, up = up_col))
+    no_col <- ifelse(is.null(no.col), colors[2], no.col)
+    up_col <- ifelse(length(colors) == 3, colors[3], colors[2])
+    both <- rgb(colorRamp(c(up_col, down_col))(0.5)/256)
+    return(list(down = down_col, no = no_col, up = up_col, both = both))
 }
 
 get_edges_df <- function(g){
@@ -363,13 +348,12 @@ get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
     return(edgestatus)
 }
 
-prepare_DAedges <- function(DApaths, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_DAedges <- function(DApaths, name, pathways, cols, conf = 0.05, adjust = TRUE){
     require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
     # Define colors
-    cols <- define_colors(colors)
-    color.edge.type <- c(cols$up, cols$down, "#987975", "lightgray", "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
+    color.edge.type <- c(cols$up, cols$down, cols$both, "lightgray", "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
     names(color.edge.type) <- c("UP", "DOWN", "Both", "None", "function")
 
     # Create edges tibble
@@ -385,7 +369,7 @@ prepare_DAedges <- function(DApaths, name, pathways, colors = "classic", conf = 
     return(edges)
 }
 
-prepare_edges <- function(name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_edges <- function(name, pathways,conf = 0.05, adjust = TRUE){
     require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
@@ -395,25 +379,38 @@ prepare_edges <- function(name, pathways, colors = "classic", conf = 0.05, adjus
                width = ifelse(functional, 1, 10),
                color = "lightgray",
                arrows = ifelse(functional, "none", "to"),
-               # hidden = functional,
                dashed = E(pg$graph)$relation == -1)
     return(edges)
 }
 
-prepare_DAnodes <- function(DAnodes, name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_DAnodes <- function(DAdata, name, pathways, cols,
+                            conf = 0.05, adjust = TRUE, no.col = NULL){
 
+    DAnodes <- DAdata[["nodes"]]
+    DApaths <- DAdata[["paths"]]
     g <- pathways$pathigraphs[[name]]$graph
 
     isname <- sapply(strsplit(DAnodes$ID, "-"), "[[", 2) == name
     DAnodes <- dplyr::filter(DAnodes, isname)
+    isname <- sapply(strsplit(DApaths$ID, "-"), "[[", 2) == name
+    DApaths <- dplyr::filter(DApaths, isname)
+    # if(adjust == TRUE){
+    #     pathsUP <- DApaths %>% filter(FDRp.value < conf, statistic > 0) %>% select(ID)
+    #     pathsDOWN <- DApaths %>% filter(FDRp.value < conf, statistic < 0) %>% select(ID)
+    # }else{
+    #     pathsUP <- DApaths %>% filter(FDRp.value < conf, statistic > 0) %>% select(ID)
+    #     pathsDOWN <- DApaths %>% filter(FDRp.value < conf, statistic < 0) %>% select(ID)
+    # }
+    # pathsUP <- gsub("P", "N", unlist(pathsUP))
+    # pathsDOWN <- gsub("P", "N", unlist(pathsDOWN))
+    effectors <- gsub("P", "N", unlist(DApaths$ID))
 
     if(adjust == TRUE){pv <- DAnodes$FDRp.value}else{pv <- DAnodes$p.value}
-    cols <- define_colors(colors)
     color <- get_colors_from_pval(tolower(DAnodes$`UP/DOWN`),
                                   pv,
                                   up_col = cols$up,
                                   down_col = cols$down,
-                                  no_col = "#d0f2ef",
+                                  no_col = cols$no,
                                   conf = conf)
     names(color) <- DAnodes$ID
     toadd <- V(g)$name[!V(g)$name %in% names(color)]
@@ -422,18 +419,44 @@ prepare_DAnodes <- function(DAnodes, name, pathways, colors = "classic", conf = 
     color <- c(color, coltoadd)
     color <- color[V(g)$name]
 
-    issig <- sapply(V(g)$name, function(n){
+    # color.border <- color
+    # color.border[pathsUP] <- "#812804"
+    # color.border[pathsDOWN] <- "#005dcf"
+    #
+    # border.width <- rep(1, length(V(g)))
+    # names(border.width) <- V(g)$name
+    # border.width[pathsUP] <- 5
+    # border.width[pathsDOWN] <- 5
+
+    isUP <- sapply(V(g)$name, function(n){
         if(n %in% DAnodes$ID){
             if(adjust == TRUE){
-                filter(DAnodes, ID == n) %>% select(FDRp.value) < conf
+                filter(DAnodes, ID == n) %>% select(FDRp.value) < conf &
+                    filter(DAnodes, ID == n) %>% select(statistic) > 0
             }else{
-                filter(DAnodes, ID == n) %>% select(p.value) < conf
-
+                filter(DAnodes, ID == n) %>% select(p.value) < conf &
+                    filter(DAnodes, ID == n) %>% select(statistic) > 0
+            }
+        }else{FALSE}
+    })
+    isDOWN <- sapply(V(g)$name, function(n){
+        if(n %in% DAnodes$ID){
+            if(adjust == TRUE){
+                filter(DAnodes, ID == n) %>% select(FDRp.value) < conf &
+                    filter(DAnodes, ID == n) %>% select(statistic) < 0
+            }else{
+                filter(DAnodes, ID == n) %>% select(p.value) < conf &
+                    filter(DAnodes, ID == n) %>% select(statistic) < 0
             }
         }else{FALSE}
     })
     group <- rep("gene", length(V(g)))
-    group[issig] <- "gene_sig"
+    names(group) <- V(g)$name
+    group[isUP] <- "gene UP"
+    group[isDOWN] <- "gene DOWN"
+    group[effectors] <- "effector"
+    group[names(group) %in% effectors & isUP] <- "effector UP"
+    group[names(group) %in% effectors & isDOWN] <- "effector DOWN"
     group[V(g)$shape == "circle"] <- "metabolite"
     group[grepl("_func", V(g)$name)] <- "function"
 
@@ -443,14 +466,16 @@ prepare_DAnodes <- function(DAnodes, name, pathways, colors = "classic", conf = 
                     title = V(g)$tooltip,
                     size = 10,
                     color = color,
-                    color.border = color,
+                    # color.border = color.border,
+                    # borderWidth = border.width,
                     font.size = 35,
                     x = V(g)$x,
                     y = V(g)$y)
     return(nodes)
 }
 
-prepare_nodes <- function(name, pathways, colors = "classic", conf = 0.05, adjust = TRUE){
+prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
+                          no.col = "BlanchedAlmond"){
 
     g <- pathways$pathigraphs[[name]]$graph
 
@@ -462,6 +487,8 @@ prepare_nodes <- function(name, pathways, colors = "classic", conf = 0.05, adjus
                     group = group,
                     label = V(g)$label,
                     title = V(g)$tooltip,
+                    color = no.col,
+                    color.border = no.col,
                     size = 10,
                     font.size = 35,
                     x = V(g)$x,
@@ -470,49 +497,100 @@ prepare_nodes <- function(name, pathways, colors = "classic", conf = 0.05, adjus
 }
 
 
-plotVG <- function(name, pathways, DAdata = NULL, colors = "classic",
+plotVG <- function(name, pathways, DAdata = NULL, colors = "vg",
                    conf = 0.05, adjust = TRUE, main = "Pathway",
-                   submain = ""){
+                   submain = "", no.col = "BlanchedAlmond",
+                   height = "800px"){
+
+    cols <- define_colors(colors, no.col)
 
     if(is.null(DAdata)){
-        nodes <- prepare_nodes(name, pathways, colors, conf, adjust)
-        edges <- prepare_edges(name, pathways, colors, conf, adjust)
+        nodes <- prepare_nodes(name, pathways, conf, adjust, no.col)
+        edges <- prepare_edges(name, pathways, conf, adjust)
         submain <- "KEGG database"
+        ledges <- data.frame(label = c("Relation", "function"),
+                             color = c("lightgray", "gainsboro"),
+                             width = c(10, 1))
     }else{
-        nodes <- prepare_DAnodes(DAdata[["nodes"]], name, pathways, colors, conf, adjust)
-        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, colors, conf, adjust)
+        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf, adjust, no.col)
+        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols, conf, adjust)
         submain <- "Differential activation plot"
+        ledges <- data.frame(label = c("UP", "DOWN", "Both", "None", "function"),
+                             color = c(cols$up, cols$down, cols$both, "lightgray", "gainsboro"),
+                             width = c(10, 10, 10, 10, 1))
     }
 
     pname <- pathways$pathigraphs[[name]]$path.name
 
-    plotVisGraphDE(nodes, edges, main = pname, submain = submain)
+    plotVisGraphDE(nodes, edges, ledges, main = pname, submain = submain,
+                   cols = cols, height = height)
 }
 
 
-plotVisGraphDE <- function(nodes, edges, main = "Pathway", submain = "Differential activation plot"){
+plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
+                           submain = "Differential activation plot",
+                           cols = list(no = "BlanchedAlmond", up = "red", down = "blue"),
+                           height = "800px"){
     require(visNetwork, quietly = TRUE)
 
     coords <- matrix(c(nodes$x, nodes$y), ncol = 2)
 
-    visNetwork(nodes, edges, height = "400px", width = "100%",
+    visNetwork(nodes, edges, height = height, width = "100%",
                main = main, submain = submain) %>%
-        # visEdges(arrows = list(to = list(enabled = !type == "function")),
-        #          dashes = type == "function") %>%
         visGroups(groupname = "gene",
-                  shape = "elipse",
-                  color = list(background = c("#d0f2ef"),
-                               border = "#d0f2ef",
+                  shape = "box",
+                  color = list(background = cols$no,
+                               border = cols$no,
                                highlight = list(background = "#ff9368",
                                                 border = "#e4882e")),
-                  font = list(color = "#316B8F"),
+                  font = list(color = "#6d7698"),
                   labelHighlightBold = FALSE,
                   shadow = list(enabled = TRUE,
                                 size = 5)) %>%
-        visGroups(groupname = "gene_sig",
+        visGroups(groupname = "effector",
                   shape = "elipse",
-                  color = list(background = c("#d0f2ef"),
-                               border = "#d0f2ef",
+                  color = list(background = cols$no,
+                               border = cols$no,
+                               highlight = list(background = "#ff9368",
+                                                border = "#e4882e")),
+                  font = list(color = "#6d7698"),
+                  labelHighlightBold = FALSE,
+                  shadow = list(enabled = TRUE,
+                                size = 5)) %>%
+        visGroups(groupname = "gene UP",
+                  shape = "box",
+                  color = list(background = cols$up,
+                               border = cols$up,
+                               highlight = list(background = "#ff9368",
+                                                border = "#e4882e")),
+                  font = list(color = "white"),
+                  labelHighlightBold = FALSE,
+                  shadow = list(enabled = TRUE,
+                                size = 5)) %>%
+        visGroups(groupname = "effector UP",
+                  shape = "elipse",
+                  color = list(background = cols$up,
+                               border = cols$up,
+                               highlight = list(background = "#ff9368",
+                                                border = "#e4882e")),
+                  font = list(color = "white"),
+                  labelHighlightBold = FALSE,
+                  shadow = list(enabled = TRUE,
+                                size = 5)) %>%
+        visGroups(groupname = "gene DOWN",
+                  shape = "box",
+                  color = list(background = cols$down,
+                               border = cols$down,
+                               highlight = list(background = "#ff9368",
+                                                border = "#e4882e")),
+                  font = list(color = "white"),
+                  labelHighlightBold = FALSE,
+                  shadow = list(enabled = TRUE,
+                                size = 5)) %>%
+        visGroups(groupname = "effector DOWN",
+                  shape = "elipse",
+                  color = list(background = cols$down,
+                               border = cols$down,
                                highlight = list(background = "#ff9368",
                                                 border = "#e4882e")),
                   font = list(color = "white"),
@@ -521,7 +599,7 @@ plotVisGraphDE <- function(nodes, edges, main = "Pathway", submain = "Differenti
                                 size = 5)) %>%
         visGroups(groupname = "metabolite",
                   shape = "square",
-                  color = "#d0f2ef",
+                  color = cols$no,
                   shadow = FALSE) %>%
         visGroups(groupname = "function",
                   shape = "text",
@@ -540,6 +618,27 @@ plotVisGraphDE <- function(nodes, edges, main = "Pathway", submain = "Differenti
                    #                   main = "Select by function",
                    #                   values = unique(nodes$label[groups == "function"]),
                    #                   multiple = TRUE)
-        )
+        ) %>%
+        visLegend(position = "right", useGroups = T, main = "Legend",
+                  addEdges = ledges)
 
+}
+
+
+DAreport <- function(DAdata, pathways, conf.level = 0.05, adjust = TRUE,
+                     group_by = "pathway", colors = "classic",
+                     output_folder = NULL, path = NULL, verbose = TRUE){
+
+    nodecomp <- as.data.frame(DAdata[["nodes"]])
+    rownames(nodecomp) <- nodecomp$ID
+    colors_de <- node_color(nodecomp, pathways, group_by = group_by,
+                            colors = colors, conf = conf.level,
+                            adjust = adjust)
+
+    comp <- as.data.frame(select(DAdata[["paths"]], ID:FDRp.value))
+    rownames(comp) <- comp$ID
+    path <- create_report(comp, pathways, node_colors = colors_de,
+                          output_folder = output_folder, path = path,
+                          verbose = verbose)
+    return(path)
 }

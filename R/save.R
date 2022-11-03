@@ -563,7 +563,7 @@ create_pathways_folder <- function(output_folder, metaginfo, comp, moreatts,
         dir.create(pathways_folder)
     for(pathway in names(metaginfo$pathigraphs)){
         if(verbose == TRUE)
-            cat(pathway)
+            cat(pathway, "\n")
         write_attributes(comp,
                          pathway,
                          metaginfo,
