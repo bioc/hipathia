@@ -533,7 +533,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
                            height = "800px"){
     require(visNetwork, quietly = TRUE)
 
-    coords <- matrix(c(nodes$x, nodes$y), ncol = 2)
+    coords <- matrix(c(nodes$x, -nodes$y), ncol = 2)
 
     visNetwork(nodes, edges, height = height, width = "100%",
                main = main, submain = submain) %>%
