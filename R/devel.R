@@ -1,4 +1,4 @@
-DApathways <- function(hidata, groups, expdes, g2 = NULL,
+DAcomp <- function(hidata, groups, expdes, g2 = NULL,
                     path.method = "wilcoxon", node.method = "limma",
                     fun.method = "wilcoxon",
                     order = FALSE, paired = FALSE, adjust = TRUE,
@@ -31,7 +31,8 @@ DApathways <- function(hidata, groups, expdes, g2 = NULL,
                           order = order)
   }
     node.comp <- tibble(ID = rowData(hidata[["nodes"]])$name,
-                        name = rowData(hidata[["nodes"]])$label,
+                        name = rowData(hidata[["nodes"]])$node.name,
+                        label = rowData(hidata[["nodes"]])$label,
                         node.comp,
                         type = rowData(hidata[["nodes"]])$node.type)
 
@@ -121,30 +122,83 @@ DApathways <- function(hidata, groups, expdes, g2 = NULL,
 }
 
 
-DAsummary <- function(DAdata, plot = FALSE, conf.level = 0.05,
-                      n.paths = 10, ratio = F){
+topDA <- function(DAdata, conf.level = 0.05, n = 10, adjust = TRUE, colors = "hiro"){
+    colors <- define_colors(colors)
+    toplist <- lapply(names(DAdata), function(feat){
+        DA <- DAdata[[feat]]
+        if(feat == "nodes") DA$name <- paste(DA$name, "(node)")
+        if(adjust == TRUE){
+            newn <- min(n, sum(DA$FDRp.value < conf.level))
+            DA[order(DA$p.value, decreasing = FALSE),][1:newn,] %>%
+                mutate(logPV = abs(log10(FDRp.value)) * sign(statistic),
+                       feature = feat)
+        }else{
+            newn <- min(n, sum(DA$p.value < conf.level))
+            DA[order(DA$p.value, decreasing = FALSE),][1:newn,] %>%
+                mutate(logPV = abs(log10(p.value)) * sign(statistic),
+                       feature = feat)
+        }
+    })
+    names(toplist) <- names(DAdata)
+    top <- do.call(rbind, lapply(toplist, function(tl) select(tl, c(name, logPV, feature))))
+    top$name <- factor(top$name, levels = top$name[nrow(top):1])
+    top$feature <- factor(top$feature,
+                          levels = c("nodes", "paths",
+                                     names(DAdata)[!names(DAdata) %in% c("nodes", "paths")]))
+    top$feature <- recode_factor(top$feature, nodes = "Nodes", paths = "Paths",
+                                 uni.terms = "Uniprot", GO.terms = "GO terms")
+    dir <- c("UP", "DOWN")
+    names(dir) <- c("1", "-1")
+    top$direction <- dir[paste(sign(top$logPV))]
+
+    print(ggplot(top, aes(x = name, y = logPV, color = direction)) +
+              geom_point(stat = "identity") +
+              scale_color_manual(name = "Status", values = c(colors$down, colors$up)) +
+              # scale_fill_met_d("Hiroshige", direction = 1) +
+              ylab("abs(Log10 of Adjusted P-value) * direction") +
+              xlab("") +
+              facet_wrap(~ feature, scales = "free_y") +
+              ggtitle(paste("Top", n, "altered features")) +
+              theme_minimal() +
+              theme(legend.position = "bottom") +
+              coord_flip())
+
+    return(toplist)
+}
+
+DAsummary <- function(DAdata, conf.level = 0.05, adjust = TRUE,
+                      n.paths = 10, ratio = F, colors = "hiro"){
+    # Summary
+    Psumm <- pathway_summary(DAdata, conf.level, adjust = adjust)
+    g <- summary_plot(Psumm, n.paths = n.paths, ratio = ratio, colors = colors)
+    return(Psumm)
+}
+
+DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
     # Summary
     summ <- lapply(names(DAdata), function(feat){
         data <- DAdata[[feat]]
-        summdf <- data.frame(feature = feat,
-                             total = nrow(data),
-                             sigs = sum(data$FDRp.value < conf.level),
-                             UPs = sum(data$FDRp.value < conf.level & data$statistic > 0),
-                             DOWNs = sum(data$FDRp.value < conf.level & data$statistic < 0))
+        if(adjust == TRUE){
+            summdf <- data.frame(feature = feat,
+                                 total = nrow(data),
+                                 sigs = sum(data$FDRp.value < conf.level),
+                                 UPs = sum(data$FDRp.value < conf.level & data$statistic > 0),
+                                 DOWNs = sum(data$FDRp.value < conf.level & data$statistic < 0))
+        }else{
+            summdf <- data.frame(feature = feat,
+                                 total = nrow(data),
+                                 sigs = sum(data$p.value < conf.level),
+                                 UPs = sum(data$p.value < conf.level & data$statistic > 0),
+                                 DOWNs = sum(data$p.value < conf.level & data$statistic < 0))
+        }
     })
     summ <- tibble(do.call(rbind, summ))
-    Psumm <- pathway_summary(DAdata, conf.level)
-    DAsumm <- list(all = summ, by.pathway = Psumm)
-    p <- nsig_plot(summ)
-    g <- summary_plot(Psumm, n.paths = n.paths, ratio = ratio)
-    if(plot == TRUE){
-        DAsumm$nsig_plot <- p
-        DAsumm$summary_plot <- g
-    }
-    return(DAsumm)
+    p <- nsig_plot(summ, colors)
+    return(summ)
 }
 
-pathway_summary <- function(DAdata, conf = 0.05){
+
+pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE){
     require(dplyr)
     # PATHS
     comp <- DAdata$paths
@@ -153,15 +207,27 @@ pathway_summary <- function(DAdata, conf = 0.05){
     allpathways <- unique(comp[,c("pathway.ID", "pathway.name")])
     summp <- lapply(allpathways$pathway.ID, function(pathway){
         mini <- comp[comp$pathway.ID == pathway,]
-        pdf <- data.frame(sigs = sum(mini$FDRp.value < conf),
-                   UPs = sum(mini$FDRp.value < conf & mini$statistic > 0),
-                   DOWNs = sum(mini$FDRp.value < conf & mini$statistic < 0),
-                   total = nrow(mini),
-                   ratio.sigs = sum(mini$FDRp.value < conf)/nrow(mini),
-                   ratio.UPs = sum(mini$FDRp.value < conf &
-                                   mini$statistic > 0)/nrow(mini),
-                   ratio.DOWNs = sum(mini$FDRp.value < conf &
-                                     mini$statistic < 0)/nrow(mini))
+        if(adjust == TRUE){
+            pdf <- data.frame(sigs = sum(mini$FDRp.value < conf),
+                              UPs = sum(mini$FDRp.value < conf & mini$statistic > 0),
+                              DOWNs = sum(mini$FDRp.value < conf & mini$statistic < 0),
+                              total = nrow(mini),
+                              ratio.sigs = sum(mini$FDRp.value < conf)/nrow(mini),
+                              ratio.UPs = sum(mini$FDRp.value < conf &
+                                                  mini$statistic > 0)/nrow(mini),
+                              ratio.DOWNs = sum(mini$FDRp.value < conf &
+                                                    mini$statistic < 0)/nrow(mini))
+        }else{
+            pdf <- data.frame(sigs = sum(mini$p.value < conf),
+                              UPs = sum(mini$p.value < conf & mini$statistic > 0),
+                              DOWNs = sum(mini$p.value < conf & mini$statistic < 0),
+                              total = nrow(mini),
+                              ratio.sigs = sum(mini$p.value < conf)/nrow(mini),
+                              ratio.UPs = sum(mini$p.value < conf &
+                                                  mini$statistic > 0)/nrow(mini),
+                              ratio.DOWNs = sum(mini$p.value < conf &
+                                                    mini$statistic < 0)/nrow(mini))
+        }
     })
     summp <- do.call("rbind", summp)
     # NODES
@@ -169,11 +235,19 @@ pathway_summary <- function(DAdata, conf = 0.05){
     ndata$pathway.ID <- sapply(strsplit(ndata$ID, split = "-"), "[[", 2)
     summn <- lapply(allpathways$pathway.ID, function(pathway){
         mini <- ndata[ndata$pathway.ID == pathway,]
-        ndf <- data.frame(sig.nodes = sum(mini$FDRp.value < conf),
-                          UP.nodes = sum(mini$FDRp.value < conf & mini$statistic > 0),
-                          DOWN.nodes = sum(mini$FDRp.value < conf & mini$statistic < 0),
-                          gene.nodes = sum(mini$type == "gene"),
-                          total.nodes = nrow(mini))
+        if(adjust == TRUE){
+            ndf <- data.frame(sig.nodes = sum(mini$FDRp.value < conf),
+                              UP.nodes = sum(mini$FDRp.value < conf & mini$statistic > 0),
+                              DOWN.nodes = sum(mini$FDRp.value < conf & mini$statistic < 0),
+                              gene.nodes = sum(mini$type == "gene"),
+                              total.nodes = nrow(mini))
+        }else{
+            ndf <- data.frame(sig.nodes = sum(mini$p.value < conf),
+                              UP.nodes = sum(mini$p.value < conf & mini$statistic > 0),
+                              DOWN.nodes = sum(mini$p.value < conf & mini$statistic < 0),
+                              gene.nodes = sum(mini$type == "gene"),
+                              total.nodes = nrow(mini))
+        }
     })
     summn <- do.call("rbind", summn)
     # TOGETHER
@@ -187,7 +261,7 @@ pathway_summary <- function(DAdata, conf = 0.05){
 }
 
 
-summary_plot <- function(Psumm, n.paths = 10, ratio = F){
+summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
     require(ggplot2)
     require(reshape2)
     require(ggpubr)
@@ -202,16 +276,17 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F){
     palette <- c("#ff8a43", "#089099") # Colores hipathia
     palette <- c("#c7e9b4", "#41b6c4") # Frío bonito
     palette <- met.brewer(name = "Signac", 2, direction = 1) # Cálido bonito
+    palette <- define_colors(colors)
 
     d1 <- mutate(pdata, Not = total - UPs - DOWNs) %>%
         mutate(UP = UPs) %>%
         mutate(DOWN = DOWNs) %>%
         select(c(name, UP, DOWN, Not))
-    data1 <- melt(d1)
+    data1 <- melt(d1, "name")
     data1$variable <- factor(data1$variable, levels = unique(data1$variable)[c(3,1,2)])
     g1 <- ggplot(data1, aes(x = name, y = value, fill = variable)) +
         geom_bar(stat = "identity") +
-        scale_fill_manual(name = "Status", values = c("#dfe0df", palette)) +
+        scale_fill_manual(name = "Status", values = c("#dfe0df", palette$up, palette$down)) +
         # scale_fill_met_d("Hiroshige", direction = 1) +
         ylab("Total significant paths") +
         xlab("Pathway") +
@@ -228,7 +303,7 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F){
         geom_point(aes(color = variable, size = nodes)) +
         geom_point(aes(size = nodes - 5), color = "white") +
         geom_point(aes(color = variable, size = value)) +
-        scale_color_manual(name = "Status", values = palette) +
+        scale_color_manual(name = "Status", values = c(palette$up, palette$down)) +
         ylab("DE nodes") +
         ggtitle("") +
         theme_minimal() +
@@ -241,7 +316,7 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F){
     if(ratio == TRUE){
         d2 <- select(pdata, c(name, ratio.sigs, ratio.UPs, ratio.DOWNs))
         colnames(d2) <- c("name", "Sig", "UP", "DOWN")
-        data2 <- melt(d2)
+        data2 <- melt(d2, "name")
         g2 <- ggplot(data2, aes(x = variable, y = name, fill = value)) +
             geom_tile() +
             # scale_fill_distiller(palette = "YlOrBr", direction = 1) +
@@ -263,22 +338,32 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F){
 }
 
 
-nsig_plot <- function(summ){
+nsig_plot <- function(summ, colors = "vg"){
     require(ggplot2)
     require(reshape2)
 
     palette <- c("#089099", "#ff8a43", "#5bc6cf", "#befcff") # Colores hipathia
+    palette <- define_colors(colors)
+    d1 <- mutate(summ, Not = total - UPs - DOWNs) %>%
+        mutate(UP = UPs) %>%
+        mutate(DOWN = DOWNs) %>%
+        select(c(feature, UP, DOWN, Not))
+    d1$feature <- factor(d1$feature, levels = c("nodes", "paths", d1$feature[!d1$feature %in% c("nodes", "paths")]))
+    d1$feature <- recode_factor(d1$feature, nodes = "Nodes", paths = "Paths",
+                  uni.terms = "Uniprot", GO.terms = "GO terms")
 
-    colnames(summ) <- c("feature", "Total", "Sig", "UP", "DOWN")
-    data <- melt(summ)
-    g <- ggplot(data, aes(x = feature, y = value, fill = variable)) +
-        geom_bar(stat = "identity", position = position_dodge()) +
-        scale_fill_manual(name = "Type", values = palette) +
+    data1 <- melt(d1, "feature")
+    # data1$feature <- factor(data1$feature, levels = levels(data1$feature)[length(levels(data1$feature)):1])
+    data1$variable <- factor(data1$variable, levels = unique(data1$variable)[c(3,1,2)])
+    g <- ggplot(data1, aes(x = feature, y = value, fill = variable)) +
+        geom_bar(stat = "identity") +
+        scale_fill_manual(name = "Status", values = c("#dfe0df", palette$up, palette$down)) +
         ylab("") +
         xlab("Feature") +
-        ggtitle("Results summary") +
+        ggtitle("Results overview") +
         theme_minimal() +
-        theme(legend.position = "left")
+        theme(legend.position = "right") #+
+        # coord_flip()
 
     print(g)
     return(g)
@@ -290,16 +375,18 @@ define_colors <- function(colors, no.col = NULL){
             colors <- c("#50b7ae", "white", "#f16a34")
         }else if(colors == "classic"){
             colors <- c("#1f9cda","white","#da1f1f")
+        }else if(colors == "soft"){
+            colors <- c("#50B7AE", "#ffa17a")
         }else if(colors == "okee"){
-            colors <- met.brewer("OKeeffe1", 7, direction = -1)[c(2,4,6)]
+            colors <- c("#447fdd", "#da6c42")
         }else if(colors == "hiro"){
             colors <- met.brewer("Hiroshige", 9, direction = -1)[c(3,7,9)]
         }else if(colors == "new"){
             colors <- c("#089099", "#eee8a9", "#ff8a43")
-        }else if(colors == "edges"){
-            colors <- c("#447fdd", "gray", "#da6c42")
         }else if(colors == "vg"){
             colors <- c("#60a8ff", "#ff9368")
+        }else if(colors == "orchid"){
+            colors <- c("#9da6ef", "#d8443c")
         }
     }
     down_col <- colors[1]
