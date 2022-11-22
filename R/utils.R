@@ -963,7 +963,7 @@ get_node_type <- function(metaginfo){
         d <- data.frame(name = V(pg$graph)$name,
                          label = V(pg$graph)$label,
                          type = types[V(pg$graph)$shape])
-        d <- filter(d, !grepl("_func", d$name))
+        d <- d[!grepl("_func", d$name),]
     })
     alltypes <- do.call(rbind, df)
     return(alltypes)

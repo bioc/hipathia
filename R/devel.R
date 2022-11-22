@@ -1,3 +1,70 @@
+##
+## devel.R
+## Devel functions of package Hipathia
+##
+## Written by Marta R. Hidalgo, marta.hidalgo@outlook.es
+##
+## Code style by Hadley Wickham (http://r-pkgs.had.co.nz/style.html)
+## https://www.bioconductor.org/developers/how-to/coding-style/
+##
+
+#' Compares the gene expression, pathway activation level and the function
+#' activation level of the
+#'
+#' @param hidata Either a SummarizedExperiment object or a matrix, returned by
+#' function \code{hipathia}.
+#' @param groups Either a character indicating the name of the column in colData
+#' including the classes to compare, or a character vector with the class to
+#' which each sample belongs.
+#' Samples must be ordered as in \code{hidata}.
+#' @param expdes String, either an equation expression to pas to \code{limma},
+#' or the label of the first group to be compared
+#' @param g2 String, label of the second group to be compared, if not specified
+#' in \code{expdes}.
+#' @param path.method String, method to be used when comparing pathways.
+#' Options include \code{wilcoxon} (default, performs a Wilcoxon test comparing
+#' conditions \code{expdes} and \code{g2} - in this case, mandatory parameter)
+#' and \code{limma} (performs a limma DE analysis using functions \code{lmFit},
+#' \code{contrasts.fit} and \code{eBayes} using the formula in \code{expdes} or
+#' comparing conditions \code{expdes} and \code{g2}.
+#' @param node.method String, method to be used when comparing nodes.
+#' Options include \code{wilcoxon} (performs a Wilcoxon test comparing
+#' conditions \code{expdes} and \code{g2} - in this case, mandatory parameter)
+#' and \code{limma} (default, performs a limma DE analysis using functions
+#' \code{lmFit}, \code{contrasts.fit} and \code{eBayes} using the formula in
+#' \code{expdes} or comparing conditions \code{expdes} and \code{g2}.
+#' @param fun.method String, method to be used when comparing functions.
+#' Options include \code{wilcoxon} (default, performs a Wilcoxon test comparing
+#' conditions \code{expdes} and \code{g2} - in this case, mandatory parameter)
+#' and \code{limma} (performs a limma DE analysis using functions \code{lmFit},
+#' \code{contrasts.fit} and \code{eBayes} using the formula in \code{expdes} or
+#' comparing conditions \code{expdes} and \code{g2}.
+#' @param order Boolean, whether to order the results table by the
+#' \code{FDRp.value} column. Default is FALSE.
+#' @param paired Boolean, whether the samples to be compared are paired.
+#' If TRUE, function \code{wilcoxsign_test} from package \code{coin} is
+#' used. If FALSE, function \code{wilcox.test} from package \code{stats}
+#' is used.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param conf_level Numeric, cut off for significance. Default is 0.05.
+#' @param sel_assay Character or integer, indicating the assay to be normalized
+#' in the SummarizedExperiment. Default is 1.
+#'
+#' @return List including comparison results for nodes, pathways and functions,
+#' if present.
+#'
+#' @examples
+#' data(path_vals)
+#' data(brca_design)
+#' sample_group <- brca_design[colnames(path_vals),"group"]
+#' comp <- DAcomp(path_vals, sample_group, g1 = "Tumor", g2 = "Normal")
+#'
+#' @export
+#' @import SummarizedExperiment
+#' @import tidyverse
+#' @importFrom methods is
+#'
 DAcomp <- function(hidata, groups, expdes, g2 = NULL,
                     path.method = "wilcoxon", node.method = "limma",
                     fun.method = "wilcoxon",
@@ -122,7 +189,29 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
 }
 
 
-topDA <- function(DAdata, conf.level = 0.05, n = 10, adjust = TRUE, colors = "hiro"){
+#' Lists and plots the top \code{n} altered nodes, paths and functions (Uniprot
+#' keywords and/or GO terms, if present).
+#'
+#' @param DAdata List of comparison results, returned by function \code{DAcomp}.
+#' @param n Number of top features to show.
+#' @param conf.level Numeric, cut off for significance. Default is 0.05.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param colors String with the color scheme or vector of colors to be used.
+#' See  \code{define_colors} for available options. Default is "hiro".
+#'
+#' @return Plot and list of tables including top \code{n} altered features for
+#' nodes, paths and functions if present.
+#'
+#' @examples
+#' data(DAdata)
+#' topDA(DAdata)
+#'
+#' @export
+#' @import tidyverse
+#' @importFrom stats min
+#'
+topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
     colors <- define_colors(colors)
     toplist <- lapply(names(DAdata), function(feat){
         DA <- DAdata[[feat]]
@@ -166,14 +255,59 @@ topDA <- function(DAdata, conf.level = 0.05, n = 10, adjust = TRUE, colors = "hi
     return(toplist)
 }
 
-DAsummary <- function(DAdata, conf.level = 0.05, adjust = TRUE,
-                      n.paths = 10, ratio = F, colors = "hiro"){
+#' Lists and plots the top \code{n} altered pathways, taking into account the
+#' number of altered .
+#'
+#' @param DAdata List of comparison results, returned by function \code{DAcomp}.
+#' @param n Number of top features to show.
+#' @param conf.level Numeric, cut off for significance. Default is 0.05.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param ratio Boolean, whether to plot the ratio of significant paths with
+#' respect to the total paths in the pathway. Default is FALSE.
+#' @param colors String with the color scheme or vector of colors to be used.
+#' See  \code{define_colors} for available options. Default is "hiro".
+#' @param order.by String, how to order table of results. Available options
+#' include \code{ratio} (default, uses the ratio of significant paths with
+#' respect to the total paths in the pathway) and \code{number} (uses the number
+#' of significant paths in the pathway).
+#'
+#' @return Plot and tibble including top \code{n} altered pathways.
+#'
+#' @examples
+#' data(DAdata)
+#' DAsummary(DAdata)
+#'
+DAsummary <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
+                      ratio = F, colors = "hiro", order.by = "ratio"){
     # Summary
-    Psumm <- pathway_summary(DAdata, conf.level, adjust = adjust)
-    g <- summary_plot(Psumm, n.paths = n.paths, ratio = ratio, colors = colors)
+    Psumm <- pathway_summary(DAdata, conf.level, adjust = adjust,
+                             order.by = "ratio")
+    g <- summary_plot(Psumm, n.paths = n, ratio = ratio, colors = colors)
     return(Psumm)
 }
 
+#' Table and plot of total number of altered and not altered nodes, paths and
+#' functions (Uniprot keywords and/or GO terms, if present).
+#'
+#' @param DAdata List of comparison results, returned by function \code{DAcomp}.
+#' @param conf.level Numeric, cut off for significance. Default is 0.05.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param colors String with the color scheme or vector of colors to be used.
+#' See  \code{define_colors} for available options. Default is "hiro".
+#'
+#' @return Plot and tibble including the number of total, altered, UP- and
+#' DOWN-regulated features for nodes, paths and functions if present.
+#'
+#' @examples
+#' data(DAdata)
+#' DAoverview(DAdata)
+#'
+#' @export
+#' @import tidyverse
+#' @importFrom stats min
+#'
 DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
     # Summary
     summ <- lapply(names(DAdata), function(feat){
@@ -198,7 +332,8 @@ DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"
 }
 
 
-pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE){
+pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
+                            order.by = "ratio"){
     require(dplyr)
     # PATHS
     comp <- DAdata$paths
@@ -256,7 +391,13 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE){
                    summp,
                    summn)
     # rownames(summ) <- summ$ID
-    summ <- summ[order(-summ$ratio.sigs, -summ$total),]
+    if(order.by == "ratio"){
+        summ <- summ[order(-summ$ratio.sigs, -summ$sigs),]
+    }else if(order.by == "number"){
+        summ <- summ[order(-summ$sigs, -summ$ratio.sigs),]
+    }else{
+        stop("Not supported order.by parameter")
+    }
     return(summ)
 }
 
@@ -369,6 +510,25 @@ nsig_plot <- function(summ, colors = "vg"){
     return(g)
 }
 
+#' Color palettes to be used in plots.
+#'
+#' @param colors String with the color scheme or vector of colors to be used.
+#' Available predefined options include: \code{hipathia}, \code{classic},
+#' \code{soft}, \code{okee}, \code{hiro}, \code{new}, \code{vg}, \code{orchid}.
+#'
+#' @param no.col String with the color given to non-significant nodes, if not
+#' given in parameter \code{colors}.
+#'
+#' @return Plot and list of tables including top \code{n} altered features for
+#' nodes, paths and functions if present.
+#'
+#' @examples
+#' define_colors("hiro")
+#'
+#' @export
+#' @importFrom grDevices rgb
+#' @importFrom grDevices colorRamp
+#'
 define_colors <- function(colors, no.col = NULL){
     if(length(colors) == 1){
         if(colors == "hipathia"){
@@ -380,7 +540,7 @@ define_colors <- function(colors, no.col = NULL){
         }else if(colors == "okee"){
             colors <- c("#447fdd", "#da6c42")
         }else if(colors == "hiro"){
-            colors <- met.brewer("Hiroshige", 9, direction = -1)[c(3,7,9)]
+            colors <- c("#72bcd5", "#f7aa58", "#e76254")
         }else if(colors == "new"){
             colors <- c("#089099", "#eee8a9", "#ff8a43")
         }else if(colors == "vg"){
@@ -584,6 +744,30 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 }
 
 
+#' Plots a pathway with or without the comparison information, using the
+#' visNetwork library.
+#'
+#' @param name KEGG ID of the pathway to plot.
+#' @param pathways Pathways object.
+#' @param DAdata List of comparison results, returned by function \code{DAcomp}.
+#' @param colors String with the color scheme or vector of colors to be used.
+#' See  \code{define_colors} for available options. Default is "hiro".
+#' @param conf Numeric, cut off for significance. Default is 0.05.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param main Title of the plot.
+#' @param submain Subtitle of the plot.
+#' @param no.col String with the color given to non-significant nodes.
+#' @param height Height of the plot. Default is "800px".
+#'
+#' @return Plot of the pathway.
+#'
+#' @examples
+#' pathways <- load_pathways("hsa")
+#' plotVG("hsa04010", pathways)
+#'
+#' @export
+#'
 plotVG <- function(name, pathways, DAdata = NULL, colors = "vg",
                    conf = 0.05, adjust = TRUE, main = "Pathway",
                    submain = "", no.col = "BlanchedAlmond",
@@ -614,6 +798,7 @@ plotVG <- function(name, pathways, DAdata = NULL, colors = "vg",
 }
 
 
+#' @import visNetwork
 plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
                            submain = "Differential activation plot",
                            cols = list(no = "BlanchedAlmond", up = "red", down = "blue"),
@@ -712,6 +897,45 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
 }
 
 
+#' Create visualization HTML
+#'
+#' Saves the results of a DAdata comparison for the Hipathia pathway values
+#' into a folder, and creates a HTML from which to visualize the results on
+#' top of the pathways. The results are stored into the specified folder.
+#' If this folder does not exist, it will be created. The parent folder must
+#' exist.
+#'
+#' @examples
+#' data(DAdata)
+#' pathways <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
+#' "hsa04012"))
+#' DAreport(DAdata, pathways)
+#'
+#' @param DAdata List of comparison results, returned by function \code{DAcomp}.
+#' @param pathways Pathways object as returned by the \code{load_pathways}
+#' function
+#' @param conf.level Level of significance. By default 0.05.
+#' @param adjust Boolean, whether to adjust the p.value with
+#' Benjamini-Hochberg FDR method. Default is TRUE.
+#' @param group_by How to group the subpathways to be visualized. By default
+#' they are grouped by the pathway to which they belong. Available groupings
+#' include "uniprot", to group subpathways by their annotated Uniprot functions,
+#' "GO", to group subpathways by their annotated GO terms, and "genes", to group
+#' subpathways by the genes they include. Default is set to "pathway".
+#' @param colors String with the color scheme or vector of colors to be used.
+#' See  \code{define_colors} for available options. Default is "hiro".
+#' @param output_folder Name of the folder in which the report will be stored.
+#' @param path Absolute path to the parent directory in which `output_folder`
+#' will be saved. If it is not provided, it will be created in a temp folder.
+#' @param verbose Boolean, whether to show details about the results of the
+#' execution
+#'
+#' @return Saves the results and creates a report to visualize them through
+#' a server in the specified \code{output_folder}. Returns the folder where
+#' the report has been stored.
+#'
+#' @export
+#'
 DAreport <- function(DAdata, pathways, conf.level = 0.05, adjust = TRUE,
                      group_by = "pathway", colors = "classic",
                      output_folder = NULL, path = NULL, verbose = TRUE){
