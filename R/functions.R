@@ -150,7 +150,8 @@ quantify_funs <- function(paths_se, metaginfo, dbannot, out_matrix = FALSE,
         if(is.character(dbannot) & length(dbannot) == 1 & dbannot == "GO"){
             rd <- DataFrame(feat.name = get_go_names(rownames(fun_vals),
                                                      metaginfo$species,
-                                                     maxchar = 50))
+                                                     maxchar = 50,
+                                                     disambiguate = TRUE))
             fun_vals <- SummarizedExperiment(list(terms = fun_vals),
                                              colData = cd,
                                              rowData = rd)

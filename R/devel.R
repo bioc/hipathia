@@ -62,7 +62,7 @@
 #'
 #' @export
 #' @import SummarizedExperiment
-#' @import tidyverse
+#' @importFrom tibble tibble
 #' @importFrom methods is
 #'
 DAcomp <- function(hidata, groups, expdes, g2 = NULL,
@@ -71,7 +71,7 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
                     order = FALSE, paired = FALSE, adjust = TRUE,
                     conf.level = 0.05, sel_assay = 1){
 
-    require(dplyr)
+    # require(dplyr)
   if(is.null(g2) & (any(c(path.method, node.method) == "wilcoxon") |
                     (any(c("uni.terms", "GO.terms") %in% names(hidata)) &
                      fun.method == "wilcoxon")))
@@ -208,8 +208,9 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
 #' topDA(DAdata)
 #'
 #' @export
-#' @import tidyverse
-#' @importFrom stats min
+#' @import ggplot2
+#' @importFrom dplyr recode_factor
+#' @importFrom dplyr mutate
 #'
 topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
     colors <- define_colors(colors)
@@ -279,10 +280,10 @@ topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hi
 #' DAsummary(DAdata)
 #'
 DAsummary <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
-                      ratio = F, colors = "hiro", order.by = "ratio"){
+                      ratio = F, colors = "hiro", order.by = "number"){
     # Summary
     Psumm <- pathway_summary(DAdata, conf.level, adjust = adjust,
-                             order.by = "ratio")
+                             order.by = order.by)
     g <- summary_plot(Psumm, n.paths = n, ratio = ratio, colors = colors)
     return(Psumm)
 }
@@ -305,8 +306,7 @@ DAsummary <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
 #' DAoverview(DAdata)
 #'
 #' @export
-#' @import tidyverse
-#' @importFrom stats min
+#' @importFrom tibble tibble
 #'
 DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
     # Summary
@@ -332,9 +332,10 @@ DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"
 }
 
 
+#' @importFrom tibble tibble
 pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
                             order.by = "ratio"){
-    require(dplyr)
+
     # PATHS
     comp <- DAdata$paths
     comp$pathway.ID <- sapply(strsplit(comp$ID, split = "-"), "[[", 2)
@@ -402,21 +403,18 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
 }
 
 
+#' @import ggplot2
+#' @importFrom MetBrewer scale_fill_met_c
+#' @importFrom reshape2 melt
+#' @importFrom ggpubr ggarrange
+#' @importFrom dplyr mutate
+#' @importFrom dplyr select
+#'
 summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
-    require(ggplot2)
-    require(reshape2)
-    require(ggpubr)
-    require(MetBrewer)
-    require(rcartocolor)
-    require(RColorBrewer)
 
     pdata <- Psumm[1:n.paths,]
     pdata$name <- factor(pdata$name, levels = pdata$name[n.paths:1])
 
-    palette <- c("#da1f1f", "#1f9cda") # Clásico hipathia
-    palette <- c("#ff8a43", "#089099") # Colores hipathia
-    palette <- c("#c7e9b4", "#41b6c4") # Frío bonito
-    palette <- met.brewer(name = "Signac", 2, direction = 1) # Cálido bonito
     palette <- define_colors(colors)
 
     d1 <- mutate(pdata, Not = total - UPs - DOWNs) %>%
@@ -479,9 +477,10 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
 }
 
 
+#' @import ggplot2
+#' @importFrom reshape2 melt
+#' @importFrom dplyr recode_factor
 nsig_plot <- function(summ, colors = "vg"){
-    require(ggplot2)
-    require(reshape2)
 
     palette <- c("#089099", "#ff8a43", "#5bc6cf", "#befcff") # Colores hipathia
     palette <- define_colors(colors)
@@ -556,13 +555,14 @@ define_colors <- function(colors, no.col = NULL){
     return(list(down = down_col, no = no_col, up = up_col, both = both))
 }
 
+#' @importFrom tibble tibble
 get_edges_df <- function(g){
-    require(dplyr)
     tibble(from = get.edgelist(g)[,1],
                to = get.edgelist(g)[,2]) %>%
         mutate(name = paste(from, to, sep = "_"))
 }
 
+#' @importFrom dplyr filter
 get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
 
     # Compute matrix of edge inclusion per subpath
@@ -575,7 +575,7 @@ get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
     # Filter DA paths in this pathway & stablish their UP/DOWN status
     name <- pg$path.id
     isname <- sapply(strsplit(DApaths$ID, "-"), "[[", 2) == name
-    comp <- dplyr::filter(DApaths, isname)
+    comp <- filter(DApaths, isname)
     if(adjust == TRUE){pv <- comp$FDRp.value}else{pv <- comp$p.value}
     pathsig <- ifelse(pv < 0.05, comp$`UP/DOWN`, "NOT")
     names(pathsig) <- comp$ID
@@ -595,8 +595,9 @@ get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
     return(edgestatus)
 }
 
+#' @importFrom dplyr mutate
 prepare_DAedges <- function(DApaths, name, pathways, cols, conf = 0.05, adjust = TRUE){
-    require(dplyr)
+    # require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
     # Define colors
@@ -616,8 +617,9 @@ prepare_DAedges <- function(DApaths, name, pathways, cols, conf = 0.05, adjust =
     return(edges)
 }
 
+#' @importFrom dplyr mutate
 prepare_edges <- function(name, pathways,conf = 0.05, adjust = TRUE){
-    require(dplyr)
+    # require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
     # Create edges tibble
@@ -630,6 +632,8 @@ prepare_edges <- function(name, pathways,conf = 0.05, adjust = TRUE){
     return(edges)
 }
 
+#' @importFrom tibble tibble
+#' @importFrom dplyr filter
 prepare_DAnodes <- function(DAdata, name, pathways, cols,
                             conf = 0.05, adjust = TRUE, no.col = NULL){
 
@@ -638,9 +642,9 @@ prepare_DAnodes <- function(DAdata, name, pathways, cols,
     g <- pathways$pathigraphs[[name]]$graph
 
     isname <- sapply(strsplit(DAnodes$ID, "-"), "[[", 2) == name
-    DAnodes <- dplyr::filter(DAnodes, isname)
+    DAnodes <- filter(DAnodes, isname)
     isname <- sapply(strsplit(DApaths$ID, "-"), "[[", 2) == name
-    DApaths <- dplyr::filter(DApaths, isname)
+    DApaths <- filter(DApaths, isname)
     # if(adjust == TRUE){
     #     pathsUP <- DApaths %>% filter(FDRp.value < conf, statistic > 0) %>% select(ID)
     #     pathsDOWN <- DApaths %>% filter(FDRp.value < conf, statistic < 0) %>% select(ID)
@@ -721,6 +725,7 @@ prepare_DAnodes <- function(DAdata, name, pathways, cols,
     return(nodes)
 }
 
+#' @importFrom tibble tibble
 prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
                           no.col = "BlanchedAlmond"){
 
@@ -766,9 +771,10 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 #' pathways <- load_pathways("hsa")
 #' plotVG("hsa04010", pathways)
 #'
+#' @import visNetwork
 #' @export
 #'
-plotVG <- function(name, pathways, DAdata = NULL, colors = "vg",
+plotVG <- function(name, pathways, DAdata = NULL, colors = "hiro",
                    conf = 0.05, adjust = TRUE, main = "Pathway",
                    submain = "", no.col = "BlanchedAlmond",
                    height = "800px"){
@@ -803,7 +809,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
                            submain = "Differential activation plot",
                            cols = list(no = "BlanchedAlmond", up = "red", down = "blue"),
                            height = "800px"){
-    require(visNetwork, quietly = TRUE)
+    # require(visNetwork, quietly = TRUE)
 
     coords <- matrix(c(nodes$x, -nodes$y), ncol = 2)
 

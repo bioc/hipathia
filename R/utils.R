@@ -289,7 +289,7 @@ get_node_names <- function(metaginfo, names, maxchar=NULL){
 #' GO IDs, in the same order as provided.
 #' @export
 #'
-get_go_names <- function(names, species, maxchar=NULL){
+get_go_names <- function(names, species, maxchar=NULL, disambiguate = FALSE){
 
     gos <- load_annots("GO", species)
     if(ncol(gos) == 3){
@@ -301,7 +301,8 @@ get_go_names <- function(names, species, maxchar=NULL){
     }
 
     if(!is.null(maxchar))
-        gonames <- clip_names(gonames, maxchar = maxchar)
+        gonames <- clip_names(gonames, maxchar = maxchar, final = TRUE,
+                              disambiguate = disambiguate)
 
     return(gonames)
 
@@ -534,11 +535,34 @@ get_nodes_data <- function(results, matrix = FALSE){
 
 
 
-clip_names <- function(snames, maxchar = 30){
+clip_names <- function(snames, maxchar = 30, final = FALSE, disambiguate = FALSE){
     n <- nchar(snames)
     idx <- n > maxchar
-    n[idx] <- maxchar - 3
-    paste0(substr(snames, 1, n), ifelse(idx, "...", ""))
+    if(final == TRUE){
+        n1 <- n
+        n1[idx] <- maxchar - 13
+        clipped <- paste0(substr(snames, 1, n1), ifelse(idx, "... ", ""),
+                          ifelse(idx, substr(snames, n-9, n), ""))
+    }else{
+        n[idx] <- maxchar - 3
+        clipped <- paste0(substr(snames, 1, n), ifelse(idx, "...", ""))
+    }
+    if(disambiguate == TRUE){
+        i <- 1
+        dups <- duplicated(clipped)
+        while(any(dups)){
+            if(all(grepl(paste0("(", i-1, ")"), clipped[dups]))){
+                clipped[dups] <- gsub(paste0("\\(", i-1, "\\)"),
+                                      paste0("(", i, ")"),
+                                      clipped[dups])
+            }else{
+                clipped[dups] <- paste0(clipped[dups], "(", i, ")")
+            }
+            dups <- duplicated(clipped)
+            i <- i+1
+        }
+    }
+    return(clipped)
 }
 
 
@@ -912,10 +936,14 @@ is_decomposed <- function(ids){
     return(decomposed)
 }
 
-get_path_nodes <- function(metaginfo, path.names){
+get_path_nodes <- function(metaginfo, path.names, decompose){
     pathnodes <- sapply(path.names, function(name){
         pathway <- unlist(strsplit(name, "-"))[2]
-        nodes <- V(metaginfo$pathigraphs[[pathway]]$effector.subgraphs[[name]])$name
+        if(decompose == TRUE){
+            nodes <- V(metaginfo$pathigraphs[[pathway]]$subgraphs[[name]])$name
+        }else{
+            nodes <- V(metaginfo$pathigraphs[[pathway]]$effector.subgraphs[[name]])$name
+        }
         allnodes <- paste(nodes, collapse = ", ")
     })
 }

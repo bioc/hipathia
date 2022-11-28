@@ -22,6 +22,8 @@
 #' \code{SummarizedExperiment}.Default is 1.
 #' @param decompose Boolean, whether to compute the values for the decomposed
 #' subpathways. By default, effector subpathways are computed.
+#' @param scale Boolean, whether to scale the values matrix to [0,1]. Default is
+#' TRUE.
 #' @param maxnum Number of maximum iterations when iterating the signal
 #' through the loops into the pathways
 #' @param verbose Boolean, whether to show details about the results of
@@ -51,9 +53,12 @@
 #'
 hipathia <- function(genes_vals, metaginfo,
                      uni.terms = FALSE, GO.terms = FALSE,
-                     sel_assay = 1, decompose = FALSE,
+                     sel_assay = 1, decompose = FALSE, scale = TRUE,
                      maxnum = 100, verbose = TRUE, tol = 0.000001, test = TRUE){
 
+    if(scale == TRUE)
+        genes_vals <- normalize_data(genes_vals, by_quantiles = FALSE,
+                                     by_gene = FALSE, percentil = FALSE)
     if(is(genes_vals, "SummarizedExperiment")){
         coldata <- colData(genes_vals)
         genes_vals <- assay(genes_vals, sel_assay)
@@ -117,7 +122,8 @@ hipathia <- function(genes_vals, metaginfo,
                           path.name = get_path_names(metaginfo,
                                                      rownames(paths)),
                           path.nodes = get_path_nodes(metaginfo,
-                                                      rownames(paths)),
+                                                      rownames(paths),
+                                                      decompose = decompose),
                           decomposed = decompose)
     paths_se <- SummarizedExperiment(list(paths = paths), rowData = paths_rd,
                                      colData = coldata)
