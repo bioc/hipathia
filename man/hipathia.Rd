@@ -2,14 +2,17 @@
 % Please edit documentation in R/main.R
 \name{hipathia}
 \alias{hipathia}
-\title{Computes the level of activation of the subpathways for each 
+\title{Computes the level of activation of the subpathways for each
 of the samples}
 \usage{
 hipathia(
   genes_vals,
   metaginfo,
+  uni.terms = FALSE,
+  GO.terms = FALSE,
   sel_assay = 1,
   decompose = FALSE,
+  scale = TRUE,
   maxnum = 100,
   verbose = TRUE,
   tol = 1e-06,
@@ -17,18 +20,21 @@ hipathia(
 )
 }
 \arguments{
-\item{genes_vals}{A SummarizedExperiment or matrix with the normalized 
-expression values of the genes. Rows represent genes and columns represent 
+\item{genes_vals}{A SummarizedExperiment or matrix with the normalized
+expression values of the genes. Rows represent genes and columns represent
 samples. Rownames() must be accepted gene IDs.}
 
 \item{metaginfo}{Pathways object}
 
-\item{sel_assay}{Character or integer, indicating the assay to be processed 
-in the SummarizedExperiment. Only applied if \code{genes_vals} is a 
+\item{sel_assay}{Character or integer, indicating the assay to be processed
+in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 \code{SummarizedExperiment}.Default is 1.}
 
 \item{decompose}{Boolean, whether to compute the values for the decomposed
 subpathways. By default, effector subpathways are computed.}
+
+\item{scale}{Boolean, whether to scale the values matrix to [0,1]. Default is
+TRUE.}
 
 \item{maxnum}{Number of maximum iterations when iterating the signal
 through the loops into the pathways}
@@ -42,7 +48,7 @@ iterating the signal through the loops into the pathways}
 \item{test}{Boolean, whether to test the input objects. Default is TRUE.}
 }
 \value{
-A MultiAssayExperiment object with the level of activation of the 
+A MultiAssayExperiment object with the level of activation of the
 subpathways from
 the pathways in \code{pathigraphs} for the experiment
 with expression values in \code{genes_vals}.
@@ -55,7 +61,7 @@ data(exp_data)
 pathways <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
 "hsa04012"))
 results <- hipathia(exp_data, pathways, verbose = TRUE)
-\dontrun{results <- hipathia(exp_data, pathways, decompose = TRUE, 
+\dontrun{results <- hipathia(exp_data, pathways, decompose = TRUE,
 verbose = FALSE)}
 
 }

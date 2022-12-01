@@ -9,11 +9,11 @@ get_paths_data(results, matrix = FALSE)
 \arguments{
 \item{results}{Results object as returned by \code{hipathia}.}
 
-\item{matrix}{Boolean, if TRUE the function returns a matrix object, if 
+\item{matrix}{Boolean, if TRUE the function returns a matrix object, if
 FALSE (as default) returns a SummarizedExperiment object.}
 }
 \value{
-Object, either a SummarizedExperiment or a matrix, with the levels 
+Object, either a SummarizedExperiment or a matrix, with the levels
 of activation of each decomposed subpathway for each sample.
 }
 \description{

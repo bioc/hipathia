@@ -45,3 +45,10 @@ Version 2.3.2 (2019-05-17)
 
 Version 2.13.1 (2022-07-27)
   + Fixing bug in nodes DE with limma with high rates of 0-variance genes. 
+
+Version 2.99.0 (2022-12-01)
+  + Adding parameters uni.terms and GO.terms to hipathia, to compute functional activity within this function.
+  + Adding functions DAcomp, DAtop, DAsummary, DAoverview, define_colors, plotVG, DAreport. 
+  + Modifyng structure of objects, by creating object DAdata, which includes more information than traditional hipathia results object. This includes:
+    - Activity values of nodes, paths, and selected functions
+    - Extra information about the paths, nodes and functions in rowData elements of the SummarizedExperiments

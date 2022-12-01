@@ -4,8 +4,10 @@
 \name{path_vals}
 \alias{path_vals}
 \title{Pathways matrix of the BRCA gene expression dataset}
-\format{Matrix with 40 columns and 1868 rows. Row names are Pathway IDs
-and column names are the TCGA identifyers of the samples.}
+\format{
+Matrix with 40 columns and 1868 rows. Row names are Pathway IDs
+and column names are the TCGA identifyers of the samples.
+}
 \usage{
 data(path_vals)
 }

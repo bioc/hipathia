@@ -12,7 +12,7 @@ normalize_paths(path_vals, metaginfo)
 \item{metaginfo}{Pathways object}
 }
 \value{
-SummarizedExperiment or matrix of normalized pathway values, 
+SummarizedExperiment or matrix of normalized pathway values,
 depending on the class of \code{path_vals}.
 }
 \description{

@@ -4,8 +4,10 @@
 \name{brca_data}
 \alias{brca_data}
 \title{BRCA gene expression dataset}
-\format{Matrix with 40 columns and 18638 rows. Row names are Entrez IDs
-and column names are the  TCGA identifyers of the samples.}
+\format{
+Matrix with 40 columns and 18638 rows. Row names are Entrez IDs
+and column names are the  TCGA identifyers of the samples.
+}
 \source{
 \url{https://cancergenome.nih.gov/}
 }

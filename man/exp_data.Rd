@@ -4,8 +4,10 @@
 \name{exp_data}
 \alias{exp_data}
 \title{Normalized BRCA gene expression dataset}
-\format{Matrix with 40 columns and 3184 rows. Row names are Entrez IDs
-and column names are the  TCGA identifyers of the samples.}
+\format{
+Matrix with 40 columns and 3184 rows. Row names are Entrez IDs
+and column names are the  TCGA identifyers of the samples.
+}
 \usage{
 data(exp_data)
 }

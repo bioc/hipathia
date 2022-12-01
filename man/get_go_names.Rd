@@ -4,7 +4,7 @@
 \alias{get_go_names}
 \title{Tranlates GO IDs to GO names}
 \usage{
-get_go_names(names, species, maxchar = NULL)
+get_go_names(names, species, maxchar = NULL, disambiguate = FALSE)
 }
 \arguments{
 \item{names}{Character vector with the GO IDs to be translated.}

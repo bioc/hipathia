@@ -4,9 +4,11 @@
 \name{brca_design}
 \alias{brca_design}
 \title{BRCA experimental design}
-\format{Dataframe with 1 column and 40 rows, including the experimental
+\format{
+Dataframe with 1 column and 40 rows, including the experimental
 design of the 40 samples from the BRCA-US project from TCGA. Field
-\code{group} is the type of sample, either "Tumor" or "Normal".}
+\code{group} is the type of sample, either "Tumor" or "Normal".
+}
 \source{
 \url{https://cancergenome.nih.gov/}
 }

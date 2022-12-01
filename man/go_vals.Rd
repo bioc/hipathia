@@ -4,8 +4,10 @@
 \name{go_vals}
 \alias{go_vals}
 \title{Gene Ontology matrix of the BRCA gene expression dataset}
-\format{Matrix with 40 columns and 1654 rows. Row names are Gene Ontology
-terms and column names are the TCGA identifyers of the samples.}
+\format{
+Matrix with 40 columns and 1654 rows. Row names are Gene Ontology
+terms and column names are the TCGA identifyers of the samples.
+}
 \usage{
 data(go_vals)
 }

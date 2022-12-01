@@ -7,19 +7,19 @@
 translate_data(data, species, sel_assay = 1, verbose = TRUE)
 }
 \arguments{
-\item{data}{Either a SummarizedExperiment object or a matrix of gene 
+\item{data}{Either a SummarizedExperiment object or a matrix of gene
 expression.}
 
 \item{species}{Species of the samples.}
 
-\item{sel_assay}{Character or integer, indicating the assay to be translated 
+\item{sel_assay}{Character or integer, indicating the assay to be translated
 in the SummarizedExperiment. Default is 1.}
 
 \item{verbose}{Boolean, whether to show details about the results of the
 execution.}
 }
 \value{
-Either a SummarizedExperiment or a matrix (depending on the input 
+Either a SummarizedExperiment or a matrix (depending on the input
 type) of gene expression with Entrez IDs as rownames.
 }
 \description{

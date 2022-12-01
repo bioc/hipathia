@@ -11,7 +11,7 @@ hhead(mat, n = 5, sel_assay = 1)
 
 \item{n}{Number of rows and columns}
 
-\item{sel_assay}{Character or integer, indicating the assay to be translated 
+\item{sel_assay}{Character or integer, indicating the assay to be translated
 in the SummarizedExperiment. Default is 1.}
 }
 \value{

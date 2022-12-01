@@ -4,7 +4,9 @@
 \name{comp}
 \alias{comp}
 \title{Wilcoxon comparison of pathways object}
-\format{Table with 1868 rows and 5 columns}
+\format{
+Table with 1868 rows and 5 columns
+}
 \usage{
 data(comp)
 }

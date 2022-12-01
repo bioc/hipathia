@@ -4,7 +4,9 @@
 \name{results}
 \alias{results}
 \title{Results object}
-\format{Object of results, including pathways information.}
+\format{
+Object of results, including pathways information.
+}
 \usage{
 data(results)
 }

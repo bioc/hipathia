@@ -23,7 +23,7 @@ use ("uniprot" for Uniprot Keywords or "GO" for Gene Ontology terms), or
 a dataframe with the annotation of the genes to the functions. First
 column are gene symbols, second column the functions.}
 
-\item{out_matrix}{Boolean, whther the output object should be a matrix 
+\item{out_matrix}{Boolean, whther the output object should be a matrix
 object. Default is FALSE, returning a SummarizedExperiment object.}
 
 \item{normalize}{Boolean, whether to normalize the matrix of pathway

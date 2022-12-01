@@ -4,12 +4,14 @@
 \name{brca}
 \alias{brca}
 \title{BRCA gene expression dataset as SummarizedExperiment}
-\format{SummarizedExperiment. The assay is a matrix with 40 columns and
+\format{
+SummarizedExperiment. The assay is a matrix with 40 columns and
 18638 rows. Row names are Entrez IDs and column names are the TCGA
 identifyers of the samples. The colData() is a data.frame with 1 column and
 40 rows, including the experimental design of the 40 samples from the BRCA-US
 project from TCGA. Field \code{group} is the type of sample, either "Tumor"
-or "Normal".}
+or "Normal".
+}
 \source{
 \url{https://cancergenome.nih.gov/}
 }

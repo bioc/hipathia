@@ -76,8 +76,9 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
                     (any(c("uni.terms", "GO.terms") %in% names(hidata)) &
                      fun.method == "wilcoxon")))
     stop("Wilcoxon comparison method needs two groups to compare,
-         introduced in arguments expdes and g2 (ex. expdes = 'case', g2 = 'control').
-         Please provide both arguments or change comparison method to 'limma'.")
+         introduced in arguments expdes and g2 (ex. expdes = 'case', g2 =
+         'control'). Please provide both arguments or change comparison method
+         to 'limma'.")
 
   # Node comparison
   if(node.method == "wilcoxon"){
@@ -122,14 +123,16 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
                           order = order)
   }
     mesdf <- get_measured_nodes(hidata)[rownames(path.comp),]
-    alt <- get_altered_nodes(hidata, node.comp, conf.level)[rownames(path.comp),]
+    alt <- get_altered_nodes(hidata,
+                             node.comp, conf.level)[rownames(path.comp),]
     path.comp <- tibble(ID = rowData(hidata[["paths"]])$path.ID,
                         name = rowData(hidata[["paths"]])$path.name,
                         path.comp,
                         N.nodes = mesdf$num.nodes,
                         N.gene.nodes = mesdf$num.gene.nodes,
                         N.measured.nodes = mesdf$num.measured.nodes,
-                        ratio.measured.gene.nodes = mesdf$ratio.measured.gene.nodes,
+                        ratio.measured.gene.nodes =
+                            mesdf$ratio.measured.gene.nodes,
                         nodes = rowData(hidata[["paths"]])$path.nodes,
                         N.DA.nodes = alt$N.DA.nodes,
                         DA.nodes = alt$DA.nodes)
@@ -212,29 +215,32 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
 #' @importFrom dplyr recode_factor
 #' @importFrom dplyr mutate
 #'
-topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
+DAtop <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
+                  colors = "hiro"){
     colors <- define_colors(colors)
     toplist <- lapply(names(DAdata), function(feat){
         DA <- DAdata[[feat]]
         if(feat == "nodes") DA$name <- paste(DA$name, "(node)")
         if(adjust == TRUE){
             newn <- min(n, sum(DA$FDRp.value < conf.level))
-            DA[order(DA$p.value, decreasing = FALSE),][1:newn,] %>%
+            DA[order(DA$p.value, decreasing = FALSE),][seq_along(newn),] %>%
                 mutate(logPV = abs(log10(FDRp.value)) * sign(statistic),
                        feature = feat)
         }else{
             newn <- min(n, sum(DA$p.value < conf.level))
-            DA[order(DA$p.value, decreasing = FALSE),][1:newn,] %>%
+            DA[order(DA$p.value, decreasing = FALSE),][seq_along(newn),] %>%
                 mutate(logPV = abs(log10(p.value)) * sign(statistic),
                        feature = feat)
         }
     })
     names(toplist) <- names(DAdata)
-    top <- do.call(rbind, lapply(toplist, function(tl) select(tl, c(name, logPV, feature))))
+    top <- do.call(rbind, lapply(toplist, function(tl) select(tl, c(name, logPV,
+                                                                    feature))))
     top$name <- factor(top$name, levels = top$name[nrow(top):1])
     top$feature <- factor(top$feature,
                           levels = c("nodes", "paths",
-                                     names(DAdata)[!names(DAdata) %in% c("nodes", "paths")]))
+                                     names(DAdata)[!names(DAdata) %in%
+                                                       c("nodes", "paths")]))
     top$feature <- recode_factor(top$feature, nodes = "Nodes", paths = "Paths",
                                  uni.terms = "Uniprot", GO.terms = "GO terms")
     dir <- c("UP", "DOWN")
@@ -243,7 +249,8 @@ topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hi
 
     print(ggplot(top, aes(x = name, y = logPV, color = direction)) +
               geom_point(stat = "identity") +
-              scale_color_manual(name = "Status", values = c(colors$down, colors$up)) +
+              scale_color_manual(name = "Status", values = c(colors$down,
+                                                             colors$up)) +
               # scale_fill_met_d("Hiroshige", direction = 1) +
               ylab("abs(Log10 of Adjusted P-value) * direction") +
               xlab("") +
@@ -275,12 +282,13 @@ topDA <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE, colors = "hi
 #'
 #' @return Plot and tibble including top \code{n} altered pathways.
 #'
+#' @export
 #' @examples
 #' data(DAdata)
 #' DAsummary(DAdata)
 #'
 DAsummary <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
-                      ratio = F, colors = "hiro", order.by = "number"){
+                      ratio = FALSE, colors = "hiro", order.by = "number"){
     # Summary
     Psumm <- pathway_summary(DAdata, conf.level, adjust = adjust,
                              order.by = order.by)
@@ -308,7 +316,8 @@ DAsummary <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
 #' @export
 #' @importFrom tibble tibble
 #'
-DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"){
+DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE,
+                       colors = "hiro"){
     # Summary
     summ <- lapply(names(DAdata), function(feat){
         data <- DAdata[[feat]]
@@ -316,14 +325,18 @@ DAoverview <- function(DAdata, conf.level = 0.05, adjust = TRUE, colors = "hiro"
             summdf <- data.frame(feature = feat,
                                  total = nrow(data),
                                  sigs = sum(data$FDRp.value < conf.level),
-                                 UPs = sum(data$FDRp.value < conf.level & data$statistic > 0),
-                                 DOWNs = sum(data$FDRp.value < conf.level & data$statistic < 0))
+                                 UPs = sum(data$FDRp.value < conf.level &
+                                               data$statistic > 0),
+                                 DOWNs = sum(data$FDRp.value < conf.level &
+                                                 data$statistic < 0))
         }else{
             summdf <- data.frame(feature = feat,
                                  total = nrow(data),
                                  sigs = sum(data$p.value < conf.level),
-                                 UPs = sum(data$p.value < conf.level & data$statistic > 0),
-                                 DOWNs = sum(data$p.value < conf.level & data$statistic < 0))
+                                 UPs = sum(data$p.value < conf.level &
+                                               data$statistic > 0),
+                                 DOWNs = sum(data$p.value < conf.level &
+                                                 data$statistic < 0))
         }
     })
     summ <- tibble(do.call(rbind, summ))
@@ -345,8 +358,10 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
         mini <- comp[comp$pathway.ID == pathway,]
         if(adjust == TRUE){
             pdf <- data.frame(sigs = sum(mini$FDRp.value < conf),
-                              UPs = sum(mini$FDRp.value < conf & mini$statistic > 0),
-                              DOWNs = sum(mini$FDRp.value < conf & mini$statistic < 0),
+                              UPs = sum(mini$FDRp.value < conf &
+                                            mini$statistic > 0),
+                              DOWNs = sum(mini$FDRp.value < conf &
+                                              mini$statistic < 0),
                               total = nrow(mini),
                               ratio.sigs = sum(mini$FDRp.value < conf)/nrow(mini),
                               ratio.UPs = sum(mini$FDRp.value < conf &
@@ -355,8 +370,10 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
                                                     mini$statistic < 0)/nrow(mini))
         }else{
             pdf <- data.frame(sigs = sum(mini$p.value < conf),
-                              UPs = sum(mini$p.value < conf & mini$statistic > 0),
-                              DOWNs = sum(mini$p.value < conf & mini$statistic < 0),
+                              UPs = sum(mini$p.value < conf &
+                                            mini$statistic > 0),
+                              DOWNs = sum(mini$p.value < conf &
+                                              mini$statistic < 0),
                               total = nrow(mini),
                               ratio.sigs = sum(mini$p.value < conf)/nrow(mini),
                               ratio.UPs = sum(mini$p.value < conf &
@@ -373,14 +390,18 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
         mini <- ndata[ndata$pathway.ID == pathway,]
         if(adjust == TRUE){
             ndf <- data.frame(sig.nodes = sum(mini$FDRp.value < conf),
-                              UP.nodes = sum(mini$FDRp.value < conf & mini$statistic > 0),
-                              DOWN.nodes = sum(mini$FDRp.value < conf & mini$statistic < 0),
+                              UP.nodes = sum(mini$FDRp.value < conf &
+                                                 mini$statistic > 0),
+                              DOWN.nodes = sum(mini$FDRp.value < conf &
+                                                   mini$statistic < 0),
                               gene.nodes = sum(mini$type == "gene"),
                               total.nodes = nrow(mini))
         }else{
             ndf <- data.frame(sig.nodes = sum(mini$p.value < conf),
-                              UP.nodes = sum(mini$p.value < conf & mini$statistic > 0),
-                              DOWN.nodes = sum(mini$p.value < conf & mini$statistic < 0),
+                              UP.nodes = sum(mini$p.value < conf &
+                                                 mini$statistic > 0),
+                              DOWN.nodes = sum(mini$p.value < conf &
+                                                  mini$statistic < 0),
                               gene.nodes = sum(mini$type == "gene"),
                               total.nodes = nrow(mini))
         }
@@ -410,9 +431,9 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select
 #'
-summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
+summary_plot <- function(Psumm, n.paths = 10, ratio = FALSE, colors = "vg"){
 
-    pdata <- Psumm[1:n.paths,]
+    pdata <- Psumm[seq_along(n.paths),]
     pdata$name <- factor(pdata$name, levels = pdata$name[n.paths:1])
 
     palette <- define_colors(colors)
@@ -422,10 +443,12 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
         mutate(DOWN = DOWNs) %>%
         select(c(name, UP, DOWN, Not))
     data1 <- melt(d1, "name")
-    data1$variable <- factor(data1$variable, levels = unique(data1$variable)[c(3,1,2)])
+    data1$variable <- factor(data1$variable,
+                             levels = unique(data1$variable)[c(3,1,2)])
     g1 <- ggplot(data1, aes(x = name, y = value, fill = variable)) +
         geom_bar(stat = "identity") +
-        scale_fill_manual(name = "Status", values = c("#dfe0df", palette$up, palette$down)) +
+        scale_fill_manual(name = "Status",
+                          values = c("#dfe0df", palette$up, palette$down)) +
         # scale_fill_met_d("Hiroshige", direction = 1) +
         ylab("Total significant paths") +
         xlab("Pathway") +
@@ -442,7 +465,8 @@ summary_plot <- function(Psumm, n.paths = 10, ratio = F, colors = "vg"){
         geom_point(aes(color = variable, size = nodes)) +
         geom_point(aes(size = nodes - 5), color = "white") +
         geom_point(aes(color = variable, size = value)) +
-        scale_color_manual(name = "Status", values = c(palette$up, palette$down)) +
+        scale_color_manual(name = "Status",
+                           values = c(palette$up, palette$down)) +
         ylab("DE nodes") +
         ggtitle("") +
         theme_minimal() +
@@ -488,16 +512,21 @@ nsig_plot <- function(summ, colors = "vg"){
         mutate(UP = UPs) %>%
         mutate(DOWN = DOWNs) %>%
         select(c(feature, UP, DOWN, Not))
-    d1$feature <- factor(d1$feature, levels = c("nodes", "paths", d1$feature[!d1$feature %in% c("nodes", "paths")]))
+    d1$feature <- factor(d1$feature,
+                         levels = c("nodes", "paths",
+                                    d1$feature[!d1$feature %in%
+                                                   c("nodes", "paths")]))
     d1$feature <- recode_factor(d1$feature, nodes = "Nodes", paths = "Paths",
                   uni.terms = "Uniprot", GO.terms = "GO terms")
 
     data1 <- melt(d1, "feature")
     # data1$feature <- factor(data1$feature, levels = levels(data1$feature)[length(levels(data1$feature)):1])
-    data1$variable <- factor(data1$variable, levels = unique(data1$variable)[c(3,1,2)])
+    data1$variable <- factor(data1$variable,
+                             levels = unique(data1$variable)[c(3,1,2)])
     g <- ggplot(data1, aes(x = feature, y = value, fill = variable)) +
         geom_bar(stat = "identity") +
-        scale_fill_manual(name = "Status", values = c("#dfe0df", palette$up, palette$down)) +
+        scale_fill_manual(name = "Status",
+                          values = c("#dfe0df", palette$up, palette$down)) +
         ylab("") +
         xlab("Feature") +
         ggtitle("Results overview") +
@@ -596,12 +625,14 @@ get_edges_status <- function(pg, edgename, DApaths, adjust = TRUE){
 }
 
 #' @importFrom dplyr mutate
-prepare_DAedges <- function(DApaths, name, pathways, cols, conf = 0.05, adjust = TRUE){
+prepare_DAedges <- function(DApaths, name, pathways, cols, conf = 0.05,
+                            adjust = TRUE){
     # require(dplyr)
     pg <- pathways$pathigraphs[[name]]
 
     # Define colors
-    color.edge.type <- c(cols$up, cols$down, cols$both, "lightgray", "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
+    color.edge.type <- c(cols$up, cols$down, cols$both, "lightgray",
+                         "gainsboro") # c(met.brewer("Egypt", 4), "gainsboro") # c("#0571b0", "green", "#ca0020", "#ffc868", "gainsboro")
     names(color.edge.type) <- c("UP", "DOWN", "Both", "None", "function")
 
     # Create edges tibble
@@ -771,6 +802,9 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 #' pathways <- load_pathways("hsa")
 #' plotVG("hsa04010", pathways)
 #'
+#' data(DAdata)
+#' plotVG("hsa04010", pathways, DAdata)
+#'
 #' @import visNetwork
 #' @export
 #'
@@ -789,11 +823,14 @@ plotVG <- function(name, pathways, DAdata = NULL, colors = "hiro",
                              color = c("lightgray", "gainsboro"),
                              width = c(10, 1))
     }else{
-        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf, adjust, no.col)
-        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols, conf, adjust)
+        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf, adjust,
+                                 no.col)
+        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols, conf,
+                                 adjust)
         submain <- "Differential activation plot"
         ledges <- data.frame(label = c("UP", "DOWN", "Both", "None", "function"),
-                             color = c(cols$up, cols$down, cols$both, "lightgray", "gainsboro"),
+                             color = c(cols$up, cols$down, cols$both,
+                                       "lightgray", "gainsboro"),
                              width = c(10, 10, 10, 10, 1))
     }
 
@@ -807,7 +844,8 @@ plotVG <- function(name, pathways, DAdata = NULL, colors = "hiro",
 #' @import visNetwork
 plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
                            submain = "Differential activation plot",
-                           cols = list(no = "BlanchedAlmond", up = "red", down = "blue"),
+                           cols = list(no = "BlanchedAlmond", up = "red",
+                                       down = "blue"),
                            height = "800px"){
     # require(visNetwork, quietly = TRUE)
 
@@ -887,8 +925,8 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
         visOptions(highlightNearest = list(enabled = TRUE,
                                            degree = 100,
                                            algorithm = "hierarchical",
-                                           hover = F,
-                                           labelOnly = F),
+                                           hover = FALSE,
+                                           labelOnly = FALSE),
                    # nodesIdSelection = list(enabled = TRUE,
                    #                         main = "Select by gene",
                    #                         values = nodes$label[groups == "gene"]),
@@ -897,7 +935,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
                    #                   values = unique(nodes$label[groups == "function"]),
                    #                   multiple = TRUE)
         ) %>%
-        visLegend(position = "right", useGroups = T, main = "Legend",
+        visLegend(position = "right", useGroups = TRUE, main = "Legend",
                   addEdges = ledges)
 
 }
