@@ -67,10 +67,10 @@ is used.}
 \item{adjust}{Boolean, whether to adjust the p.value with
 Benjamini-Hochberg FDR method. Default is TRUE.}
 
+\item{conf.level}{Numeric, cut off for significance. Default is 0.05.}
+
 \item{sel_assay}{Character or integer, indicating the assay to be normalized
 in the SummarizedExperiment. Default is 1.}
-
-\item{conf_level}{Numeric, cut off for significance. Default is 0.05.}
 }
 \value{
 List including comparison results for nodes, pathways and functions,
@@ -81,9 +81,7 @@ Compares the gene expression, pathway activation level and the function
 activation level of the
 }
 \examples{
-data(path_vals)
-data(brca_design)
-sample_group <- brca_design[colnames(path_vals),"group"]
-comp <- DAcomp(path_vals, sample_group, g1 = "Tumor", g2 = "Normal")
+data(hidata)
+comp <- DAcomp(hidata, groups = "group", expdes = "Tumor", g2 = "Normal")
 
 }

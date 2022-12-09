@@ -17,6 +17,10 @@
 #' expression values of the genes. Rows represent genes and columns represent
 #' samples. Rownames() must be accepted gene IDs.
 #' @param metaginfo Pathways object
+#' @param uni.terms Boolean, whether to compute functional analysis with
+#' Uniprot keywords.
+#' @param GO.terms Boolean, whether to compute functional analysis with
+#' Gene Ontology terms.
 #' @param sel_assay Character or integer, indicating the assay to be processed
 #' in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 #' \code{SummarizedExperiment}.Default is 1.

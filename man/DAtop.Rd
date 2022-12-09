@@ -30,6 +30,6 @@ keywords and/or GO terms, if present).
 }
 \examples{
 data(DAdata)
-topDA(DAdata)
+DAtop(DAdata)
 
 }

@@ -49,7 +49,10 @@ Plots a pathway with or without the comparison information, using the
 visNetwork library.
 }
 \examples{
-pathways <- load_pathways("hsa")
-plotVG("hsa04010", pathways)
+data(pathways)
+plotVG("hsa03320", pathways)
+
+data(DAdata)
+plotVG("hsa04012", pathways, DAdata)
 
 }

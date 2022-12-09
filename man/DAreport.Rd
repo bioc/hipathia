@@ -58,8 +58,7 @@ exist.
 }
 \examples{
 data(DAdata)
-pathways <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
-"hsa04012"))
+data(pathways)
 DAreport(DAdata, pathways)
 
 }

@@ -280,6 +280,8 @@ get_node_names <- function(metaginfo, names, maxchar=NULL){
 #' @param species Species of the samples.
 #' @param maxchar Integer, describes the number of maximum characters to
 #' be shown. By default no filter is applied.
+#' @param disambiguate Boolean, whether to return unique strings by
+#' disambiguating with numbers.
 #'
 #' @examples
 #' data(go_vals)

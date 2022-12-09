@@ -26,6 +26,12 @@ samples. Rownames() must be accepted gene IDs.}
 
 \item{metaginfo}{Pathways object}
 
+\item{uni.terms}{Boolean, whether to compute functional analysis with
+Uniprot keywords.}
+
+\item{GO.terms}{Boolean, whether to compute functional analysis with
+Gene Ontology terms.}
+
 \item{sel_assay}{Character or integer, indicating the assay to be processed
 in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 \code{SummarizedExperiment}.Default is 1.}

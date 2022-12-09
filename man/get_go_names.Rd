@@ -13,6 +13,9 @@ get_go_names(names, species, maxchar = NULL, disambiguate = FALSE)
 
 \item{maxchar}{Integer, describes the number of maximum characters to
 be shown. By default no filter is applied.}
+
+\item{disambiguate}{Boolean, whether to return unique strings by
+disambiguating with numbers.}
 }
 \value{
 A character vector including the readable names of the

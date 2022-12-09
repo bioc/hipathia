@@ -37,6 +37,62 @@
 "brca"
 
 
+
+#' Results object
+#'
+#' Results object returned by \code{hipathia::hipathia} function, after calling
+#' \code{hidata <- hipathia(brca, pathways, verbose=TRUE, uni.terms = TRUE,
+#' GO.terms = TRUE)}
+#'
+#' @format MultiAssayExperiment object of 4 listed experiments, with the
+#' activity values of nodes, paths and functional annotations for each sample:
+#' Nodes includes a matrix with 6826 rows
+#' Paths includes a matrix with 1876 rows
+#' Uni.terms includes a matrix with 142 rows
+#' GO.terms includes a matrix with 1654 rows
+#'
+#' @return Object of results, including nodes, pathways and functional
+#' information.
+#'
+#' @usage data(hidata)
+#'
+"hidata"
+
+
+#' Wilcoxon and limma comparison object for nodes, pathways and functional
+#' annotations
+#'
+#' Comparison object returned by \code{hipathia::DAcomp} function, after
+#' calling
+#' \code{DAdata <- DAcomp(hidata, "group", g1 = "Tumor", g2 = "Normal")}
+#'
+#' @format List object with 4 entries:
+#' Nodes includes a matrix with 6826 rows and 8 columns
+#' Paths includes a matrix with 1876 rows and 13 columns
+#' Uni.terms includes a matrix with 142 rows and 6 columns
+#' GO.terms includes a matrix with 1654 rows and 6 columns
+#'
+#' @return List of tibbles with the comparison results
+#'
+#' @usage data(DAdata)
+#'
+"DAdata"
+
+#' Pathways object including pathways has03320 and hsa04012.
+#'
+#' Pathways object returned by \code{hipathia::load_pathways} function, after
+#' calling
+#' \code{pathways <- load_pathways(species = "hsa",
+#' pathways_list = c("hsa03320", "hsa04012"))}
+#'
+#' @format Pathways object
+#'
+#' @return Pathways object including pathways has03320 and hsa04012.
+#'
+#' @usage data(pathways)
+#'
+"pathways"
+
 #' BRCA gene expression dataset
 #'
 #' Gene expression of 40 samples from the BRCA-US project from

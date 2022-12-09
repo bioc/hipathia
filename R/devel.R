@@ -47,7 +47,7 @@
 #' is used.
 #' @param adjust Boolean, whether to adjust the p.value with
 #' Benjamini-Hochberg FDR method. Default is TRUE.
-#' @param conf_level Numeric, cut off for significance. Default is 0.05.
+#' @param conf.level Numeric, cut off for significance. Default is 0.05.
 #' @param sel_assay Character or integer, indicating the assay to be normalized
 #' in the SummarizedExperiment. Default is 1.
 #'
@@ -55,10 +55,8 @@
 #' if present.
 #'
 #' @examples
-#' data(path_vals)
-#' data(brca_design)
-#' sample_group <- brca_design[colnames(path_vals),"group"]
-#' comp <- DAcomp(path_vals, sample_group, g1 = "Tumor", g2 = "Normal")
+#' data(hidata)
+#' comp <- DAcomp(hidata, groups = "group", expdes = "Tumor", g2 = "Normal")
 #'
 #' @export
 #' @import SummarizedExperiment
@@ -208,7 +206,7 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
 #'
 #' @examples
 #' data(DAdata)
-#' topDA(DAdata)
+#' DAtop(DAdata)
 #'
 #' @export
 #' @import ggplot2
@@ -223,12 +221,12 @@ DAtop <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
         if(feat == "nodes") DA$name <- paste(DA$name, "(node)")
         if(adjust == TRUE){
             newn <- min(n, sum(DA$FDRp.value < conf.level))
-            DA[order(DA$p.value, decreasing = FALSE),][seq_along(newn),] %>%
+            DA[order(DA$p.value, decreasing = FALSE),][seq_len(newn),] %>%
                 mutate(logPV = abs(log10(FDRp.value)) * sign(statistic),
                        feature = feat)
         }else{
             newn <- min(n, sum(DA$p.value < conf.level))
-            DA[order(DA$p.value, decreasing = FALSE),][seq_along(newn),] %>%
+            DA[order(DA$p.value, decreasing = FALSE),][seq_len(newn),] %>%
                 mutate(logPV = abs(log10(p.value)) * sign(statistic),
                        feature = feat)
         }
@@ -433,7 +431,7 @@ pathway_summary <- function(DAdata, conf = 0.05, adjust = TRUE,
 #'
 summary_plot <- function(Psumm, n.paths = 10, ratio = FALSE, colors = "vg"){
 
-    pdata <- Psumm[seq_along(n.paths),]
+    pdata <- Psumm[seq_len(n.paths),]
     pdata$name <- factor(pdata$name, levels = pdata$name[n.paths:1])
 
     palette <- define_colors(colors)
@@ -799,11 +797,11 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 #' @return Plot of the pathway.
 #'
 #' @examples
-#' pathways <- load_pathways("hsa")
-#' plotVG("hsa04010", pathways)
+#' data(pathways)
+#' plotVG("hsa03320", pathways)
 #'
 #' data(DAdata)
-#' plotVG("hsa04010", pathways, DAdata)
+#' plotVG("hsa04012", pathways, DAdata)
 #'
 #' @import visNetwork
 #' @export
@@ -951,8 +949,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
 #'
 #' @examples
 #' data(DAdata)
-#' pathways <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
-#' "hsa04012"))
+#' data(pathways)
 #' DAreport(DAdata, pathways)
 #'
 #' @param DAdata List of comparison results, returned by function \code{DAcomp}.

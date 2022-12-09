@@ -10,7 +10,7 @@ DAsummary(
   n = 10,
   conf.level = 0.05,
   adjust = TRUE,
-  ratio = F,
+  ratio = FALSE,
   colors = "hiro",
   order.by = "number"
 )
