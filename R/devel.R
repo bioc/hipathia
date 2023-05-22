@@ -849,8 +849,12 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
 
     coords <- matrix(c(nodes$x, -nodes$y), ncol = 2)
 
-    visNetwork(nodes, edges, height = height, width = "100%",
+    visNetwork(nodes, edges,
+               height = length(table(coords[,2]))*100, # Poner en Hipathia
+               # width = length(table(coords[,1]))*80) %>%
+               width = (max(table(coords[,2])))*100,
                main = main, submain = submain) %>%
+        visEdges(arrows =list(to = list(enabled = TRUE, scaleFactor = 0.5))) %>%
         visGroups(groupname = "gene",
                   shape = "box",
                   color = list(background = cols$no,
