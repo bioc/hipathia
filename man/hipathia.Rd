@@ -10,6 +10,7 @@ hipathia(
   metaginfo,
   uni.terms = FALSE,
   GO.terms = FALSE,
+  custom.terms = NA,
   sel_assay = 1,
   decompose = FALSE,
   scale = TRUE,
@@ -31,6 +32,9 @@ Uniprot keywords.}
 
 \item{GO.terms}{Boolean, whether to compute functional analysis with
 Gene Ontology terms.}
+
+\item{custom.terms}{data.frame with the annotation of the genes to the
+functions. First column are gene symbols, second column the functions.}
 
 \item{sel_assay}{Character or integer, indicating the assay to be processed
 in the SummarizedExperiment. Only applied if \code{genes_vals} is a

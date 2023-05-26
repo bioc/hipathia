@@ -21,6 +21,8 @@
 #' Uniprot keywords.
 #' @param GO.terms Boolean, whether to compute functional analysis with
 #' Gene Ontology terms.
+#' @param custom.terms data.frame with the annotation of the genes to the
+#' functions. First column are gene symbols, second column the functions.
 #' @param sel_assay Character or integer, indicating the assay to be processed
 #' in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 #' \code{SummarizedExperiment}.Default is 1.
@@ -56,7 +58,7 @@
 #' @importFrom methods is
 #'
 hipathia <- function(genes_vals, metaginfo,
-                     uni.terms = FALSE, GO.terms = FALSE,
+                     uni.terms = FALSE, GO.terms = FALSE, custom.terms = NA,
                      sel_assay = 1, decompose = FALSE, scale = TRUE,
                      maxnum = 100, verbose = TRUE, tol = 0.000001, test = TRUE){
 
@@ -148,6 +150,13 @@ hipathia <- function(genes_vals, metaginfo,
             cat("\nComputing GO terms...\n")
         gos_se <- quantify_funs(paths_se, metaginfo, "GO")
         se_list$GO.terms <- gos_se
+    }
+    # Other annotations
+    if(!is.na(custom.terms)){
+        if(verbose == TRUE)
+            cat("\nComputing custom terms...\n")
+        custom_se <- quantify_funs(paths_se, metaginfo, dbannot)
+        se_list$custom.terms <- custom_se
     }
 
     resmae <- MultiAssayExperiment(se_list)

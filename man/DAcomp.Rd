@@ -29,8 +29,8 @@ including the classes to compare, or a character vector with the class to
 which each sample belongs.
 Samples must be ordered as in \code{hidata}.}
 
-\item{expdes}{String, either an equation expression to pas to \code{limma},
-or the label of the first group to be compared}
+\item{expdes}{String, either an equation expression to pass to \code{limma},
+or the label of the first group to be compared.}
 
 \item{g2}{String, label of the second group to be compared, if not specified
 in \code{expdes}.}
