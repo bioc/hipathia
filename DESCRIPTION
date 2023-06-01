@@ -1,6 +1,6 @@
 Package: hipathia
 Title: HiPathia: High-throughput Pathway Analysis
-Version: 3.0.0
+Version: 3.0.1
 Authors@R: c(person("Marta R.", "Hidalgo", email = "marta.hidalgo@outlook.es", role = c("aut", "cre")),
 	     person("José", "Carbonell-Caballero", role = c("ctb")),
 	     person("Francisco", "Salavert", role = c("ctb")),
@@ -20,7 +20,7 @@ License: GPL-2
 Encoding: UTF-8
 Imports:
   coin, stats, limma, grDevices, utils, graphics, preprocessCore, servr, DelayedArray, matrixStats, methods, S4Vectors, ggplot2, ggpubr, dplyr, tibble, visNetwork, reshape2, MetBrewer
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Suggests: BiocStyle, knitr, rmarkdown, testthat
 VignetteBuilder: knitr
 biocViews: Pathways, GraphAndNetwork, GeneExpression, GeneSignaling, GO

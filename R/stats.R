@@ -480,7 +480,9 @@ do_limma <- function(data, groups, expdes, g2 = NULL, sel_assay = 1,
 
     # Remove nodes with 0 variance
     vars <- apply(vals, 1, var)
-    novar <- vals[-which(vars == 0),]
+    novar <- vals
+    if(any(vars == 0))
+        novar <- vals[-which(vars == 0),]
 
     # Do analysis
     fit <- limma::lmFit(novar, design)
@@ -489,11 +491,13 @@ do_limma <- function(data, groups, expdes, g2 = NULL, sel_assay = 1,
     tt <- limma::topTable(fit2, coef = 1, number = "all", sort.by = "none")
 
     # Add nodes with 0 variance to results table
-    ttnovar <- data.frame(path = names(vars[vars == 0]), logFC = 0, AveExpr = 1,
-                          t = -8, P.Value = 1, adj.P.Val = 1, B = -10)
-    rownames(ttnovar) <- ttnovar$path
-    ttnovar <- ttnovar[,-1]
-    tt <- rbind(tt, ttnovar)
+    if(any(vars == 0)){
+        ttnovar <- data.frame(path = names(vars[vars == 0]), logFC = 0, AveExpr = 1,
+                              t = -8, P.Value = 1, adj.P.Val = 1, B = -10)
+        rownames(ttnovar) <- ttnovar$path
+        ttnovar <- ttnovar[,-1]
+        tt <- rbind(tt, ttnovar)
+    }
     tt <- tt[rownames(vals),]
 
     # Create results data frame

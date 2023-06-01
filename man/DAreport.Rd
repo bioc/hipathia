@@ -13,7 +13,7 @@ DAreport(
   colors = "classic",
   output_folder = NULL,
   path = NULL,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{

@@ -21,6 +21,8 @@
 #' Uniprot keywords.
 #' @param GO.terms Boolean, whether to compute functional analysis with
 #' Gene Ontology terms.
+#' @param custom.terms data.frame with the annotation of the genes to the
+#' functions. First column are gene symbols, second column the functions.
 #' @param sel_assay Character or integer, indicating the assay to be processed
 #' in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 #' \code{SummarizedExperiment}.Default is 1.
@@ -56,13 +58,12 @@
 #' @importFrom methods is
 #'
 hipathia <- function(genes_vals, metaginfo,
-                     uni.terms = FALSE, GO.terms = FALSE,
-                     sel_assay = 1, decompose = FALSE, scale = TRUE,
-                     maxnum = 100, verbose = TRUE, tol = 0.000001, test = TRUE){
+                     uni.terms = FALSE, GO.terms = FALSE, custom.terms = NA,
+                     sel_assay = 1, decompose = FALSE, maxnum = 100,
+                     verbose = TRUE, tol = 0.000001, test = TRUE){
 
-    if(scale == TRUE)
-        genes_vals <- normalize_data(genes_vals, by_quantiles = FALSE,
-                                     by_gene = FALSE, percentil = FALSE)
+    genes_vals <- normalize_data(genes_vals, by_quantiles = FALSE,
+                                 by_gene = FALSE, percentil = FALSE)
     if(is(genes_vals, "SummarizedExperiment")){
         coldata <- colData(genes_vals)
         genes_vals <- assay(genes_vals, sel_assay)
@@ -84,12 +85,12 @@ hipathia <- function(genes_vals, metaginfo,
     results <- list()
 
     if(verbose == TRUE)
-        cat("Computing pathway...\n")
+        cat("Computing pathways...\n")
 
     results$by.path <- lapply(pathigraphs, function(pathigraph){
 
-        if(verbose == TRUE)
-            cat(pathigraph$path.id, "-", pathigraph$path.name, "\n")
+        # if(verbose == TRUE)
+        #     cat(pathigraph$path.id, "-", pathigraph$path.name, "\n")
 
         res <- list()
         res$nodes.vals <- nodes_values_from_genes(genes_vals, pathigraph$graph)
@@ -149,8 +150,18 @@ hipathia <- function(genes_vals, metaginfo,
         gos_se <- quantify_funs(paths_se, metaginfo, "GO")
         se_list$GO.terms <- gos_se
     }
+    # Other annotations
+    if(!is.na(custom.terms)){
+        if(verbose == TRUE)
+            cat("\nComputing custom terms...\n")
+        custom_se <- quantify_funs(paths_se, metaginfo, dbannot)
+        se_list$custom.terms <- custom_se
+    }
 
     resmae <- MultiAssayExperiment(se_list)
+
+    if(verbose == TRUE)
+        message("DONE")
 
     return(resmae)
 }

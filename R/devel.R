@@ -17,8 +17,8 @@
 #' including the classes to compare, or a character vector with the class to
 #' which each sample belongs.
 #' Samples must be ordered as in \code{hidata}.
-#' @param expdes String, either an equation expression to pas to \code{limma},
-#' or the label of the first group to be compared
+#' @param expdes String, either an equation expression to pass to \code{limma},
+#' or the label of the first group to be compared.
 #' @param g2 String, label of the second group to be compared, if not specified
 #' in \code{expdes}.
 #' @param path.method String, method to be used when comparing pathways.
@@ -71,8 +71,8 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
 
     # require(dplyr)
   if(is.null(g2) & (any(c(path.method, node.method) == "wilcoxon") |
-                    (any(c("uni.terms", "GO.terms") %in% names(hidata)) &
-                     fun.method == "wilcoxon")))
+                    (any(c("uni.terms", "GO.terms", "custom.terms") %in%
+                         names(hidata)) & fun.method == "wilcoxon")))
     stop("Wilcoxon comparison method needs two groups to compare,
          introduced in arguments expdes and g2 (ex. expdes = 'case', g2 =
          'control'). Please provide both arguments or change comparison method
@@ -186,6 +186,30 @@ DAcomp <- function(hidata, groups, expdes, g2 = NULL,
       DAdata$GO.terms <- GO.comp
   }
 
+  # Custom terms comparison
+  if("custom.terms" %in% names(hidata)){
+      if(fun.method == "wilcoxon"){
+          custom.comp <- do_wilcoxon(data = hidata[["custom.terms"]],
+                                 group = groups,
+                                 g1 = expdes,
+                                 g2 = g2,
+                                 paired = paired,
+                                 adjust = adjust,
+                                 sel_assay = sel_assay,
+                                 order = order)
+      }else if(fun.method == "limma"){
+          custom.comp <- do_limma(data = hidata[["custom.terms"]],
+                              groups = groups,
+                              expdes = expdes,
+                              g2 = g2,
+                              sel_assay = sel_assay,
+                              order = order)
+      }
+      custom.comp <- tibble(ID = rownames(rowData(hidata[["custom.terms"]])),
+                        custom.comp)
+      DAdata$custom.terms <- custom.comp
+  }
+
   return(DAdata)
 }
 
@@ -240,7 +264,8 @@ DAtop <- function(DAdata, n = 10, conf.level = 0.05, adjust = TRUE,
                                      names(DAdata)[!names(DAdata) %in%
                                                        c("nodes", "paths")]))
     top$feature <- recode_factor(top$feature, nodes = "Nodes", paths = "Paths",
-                                 uni.terms = "Uniprot", GO.terms = "GO terms")
+                                 uni.terms = "Uniprot", GO.terms = "GO terms",
+                                 custom.terms = "Custom")
     dir <- c("UP", "DOWN")
     names(dir) <- c("1", "-1")
     top$direction <- dir[paste(sign(top$logPV))]
@@ -515,7 +540,8 @@ nsig_plot <- function(summ, colors = "vg"){
                                     d1$feature[!d1$feature %in%
                                                    c("nodes", "paths")]))
     d1$feature <- recode_factor(d1$feature, nodes = "Nodes", paths = "Paths",
-                  uni.terms = "Uniprot", GO.terms = "GO terms")
+                  uni.terms = "Uniprot", GO.terms = "GO terms",
+                  custom.terms = "Custom")
 
     data1 <- melt(d1, "feature")
     # data1$feature <- factor(data1$feature, levels = levels(data1$feature)[length(levels(data1$feature)):1])
@@ -786,7 +812,7 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 #' @param DAdata List of comparison results, returned by function \code{DAcomp}.
 #' @param colors String with the color scheme or vector of colors to be used.
 #' See  \code{define_colors} for available options. Default is "hiro".
-#' @param conf Numeric, cut off for significance. Default is 0.05.
+#' @param conf.level Numeric, cut off for significance. Default is 0.05.
 #' @param adjust Boolean, whether to adjust the p.value with
 #' Benjamini-Hochberg FDR method. Default is TRUE.
 #' @param main Title of the plot.
@@ -798,33 +824,33 @@ prepare_nodes <- function(name, pathways, conf = 0.05, adjust = TRUE,
 #'
 #' @examples
 #' data(pathways)
-#' plotVG("hsa03320", pathways)
+#' DApathway("hsa03320", pathways)
 #'
 #' data(DAdata)
-#' plotVG("hsa04012", pathways, DAdata)
+#' DApathway("hsa04012", pathways, DAdata)
 #'
 #' @import visNetwork
 #' @export
 #'
-plotVG <- function(name, pathways, DAdata = NULL, colors = "hiro",
-                   conf = 0.05, adjust = TRUE, main = "Pathway",
+DApathway <- function(name, pathways, DAdata = NULL, colors = "hiro",
+                      conf.level = 0.05, adjust = TRUE, main = "Pathway",
                    submain = "", no.col = "BlanchedAlmond",
                    height = "800px"){
 
     cols <- define_colors(colors, no.col)
 
     if(is.null(DAdata)){
-        nodes <- prepare_nodes(name, pathways, conf, adjust, no.col)
-        edges <- prepare_edges(name, pathways, conf, adjust)
+        nodes <- prepare_nodes(name, pathways, conf.level, adjust, no.col)
+        edges <- prepare_edges(name, pathways, conf.level, adjust)
         submain <- "KEGG database"
         ledges <- data.frame(label = c("Relation", "function"),
                              color = c("lightgray", "gainsboro"),
                              width = c(10, 1))
     }else{
-        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf, adjust,
-                                 no.col)
-        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols, conf,
-                                 adjust)
+        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf.level,
+                                 adjust, no.col)
+        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols,
+                                 conf.level, adjust)
         submain <- "Differential activation plot"
         ledges <- data.frame(label = c("UP", "DOWN", "Both", "None", "function"),
                              color = c(cols$up, cols$down, cols$both,
@@ -983,7 +1009,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
 #'
 DAreport <- function(DAdata, pathways, conf.level = 0.05, adjust = TRUE,
                      group_by = "pathway", colors = "classic",
-                     output_folder = NULL, path = NULL, verbose = TRUE){
+                     output_folder = NULL, path = NULL, verbose = FALSE){
 
     nodecomp <- as.data.frame(DAdata[["nodes"]])
     rownames(nodecomp) <- nodecomp$ID
@@ -995,6 +1021,6 @@ DAreport <- function(DAdata, pathways, conf.level = 0.05, adjust = TRUE,
     rownames(comp) <- comp$ID
     path <- create_report(comp, pathways, node_colors = colors_de,
                           output_folder = output_folder, path = path,
-                          verbose = verbose)
+                          verbose = verbose, group_by = group_by)
     return(path)
 }
