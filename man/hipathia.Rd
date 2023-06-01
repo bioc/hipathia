@@ -13,7 +13,6 @@ hipathia(
   custom.terms = NA,
   sel_assay = 1,
   decompose = FALSE,
-  scale = TRUE,
   maxnum = 100,
   verbose = TRUE,
   tol = 1e-06,
@@ -43,9 +42,6 @@ in the SummarizedExperiment. Only applied if \code{genes_vals} is a
 \item{decompose}{Boolean, whether to compute the values for the decomposed
 subpathways. By default, effector subpathways are computed.}
 
-\item{scale}{Boolean, whether to scale the values matrix to [0,1]. Default is
-TRUE.}
-
 \item{maxnum}{Number of maximum iterations when iterating the signal
 through the loops into the pathways}
 
@@ -56,6 +52,9 @@ the execution of hipathia}
 iterating the signal through the loops into the pathways}
 
 \item{test}{Boolean, whether to test the input objects. Default is TRUE.}
+
+\item{scale}{Boolean, whether to scale the values matrix to [0,1]. Default is
+TRUE.}
 }
 \value{
 A MultiAssayExperiment object with the level of activation of the

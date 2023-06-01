@@ -10,7 +10,7 @@ DApathway(
   pathways,
   DAdata = NULL,
   colors = "hiro",
-  conf = 0.05,
+  conf.level = 0.05,
   adjust = TRUE,
   main = "Pathway",
   submain = "",
@@ -28,7 +28,7 @@ DApathway(
 \item{colors}{String with the color scheme or vector of colors to be used.
 See  \code{define_colors} for available options. Default is "hiro".}
 
-\item{conf}{Numeric, cut off for significance. Default is 0.05.}
+\item{conf.level}{Numeric, cut off for significance. Default is 0.05.}
 
 \item{adjust}{Boolean, whether to adjust the p.value with
 Benjamini-Hochberg FDR method. Default is TRUE.}

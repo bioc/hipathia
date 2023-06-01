@@ -562,8 +562,8 @@ create_pathways_folder <- function(output_folder, metaginfo, comp, moreatts,
     if(!file.exists(pathways_folder))
         dir.create(pathways_folder)
     for(pathway in names(metaginfo$pathigraphs)){
-        if(verbose == TRUE)
-            cat(pathway, "\n")
+        # if(verbose == TRUE)
+        #     cat(pathway, "\n")
         write_attributes(comp,
                          pathway,
                          metaginfo,
@@ -656,7 +656,7 @@ create_html_index <- function(home, output_folder,
 #'
 create_report <- function(comp, metaginfo, output_folder = NULL, path = NULL,
                           node_colors = NULL,
-                          group_by = "pathway", conf = 0.05, verbose = FALSE){
+                          group_by = "pathway", conf = 0.05, verbose = TRUE){
 
     if(group_by != "pathway" &
        length(unlist(strsplit(rownames(comp)[1], split = "-"))) == 4)
@@ -671,7 +671,8 @@ create_report <- function(comp, metaginfo, output_folder = NULL, path = NULL,
     }
 
     if(group_by != "pathway"){
-        message("Creating groupings by ", group_by, "...")
+        if(verbose == TRUE)
+            message("Creating groupings by ", group_by, "...")
         metaginfo <- get_pseudo_metaginfo(metaginfo, group_by = group_by)
     }
 
@@ -687,19 +688,24 @@ create_report <- function(comp, metaginfo, output_folder = NULL, path = NULL,
 
     pv_path <- paste0(system.file("extdata", package="hipathia"))
 
-    message("Creating report folders...")
+    if(verbose == TRUE)
+        message("Creating report folders...")
     create_report_folders(output_folder, pv_path, clean_out_folder = FALSE)
 
-    message("Creating pathways folder...")
+    if(verbose == TRUE)
+        message("Creating pathways folder...")
     create_pathways_folder(output_folder, metaginfo, comp, moreatts, conf,
                            verbose)
 
-    message("Creating HTML index...")
+    if(verbose == TRUE)
+        message("Creating HTML index...")
     create_html_index(pv_path,
                       output_folder,
                       template_name = "index_template.html",
                       output_name = "index.html")
 
+    if(verbose == TRUE)
+        message("DONE")
     return(output_folder)
 }
 

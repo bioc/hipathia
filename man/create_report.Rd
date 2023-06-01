@@ -12,7 +12,7 @@ create_report(
   node_colors = NULL,
   group_by = "pathway",
   conf = 0.05,
-  verbose = FALSE
+  verbose = TRUE
 )
 }
 \arguments{

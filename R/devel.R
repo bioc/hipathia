@@ -840,17 +840,17 @@ DApathway <- function(name, pathways, DAdata = NULL, colors = "hiro",
     cols <- define_colors(colors, no.col)
 
     if(is.null(DAdata)){
-        nodes <- prepare_nodes(name, pathways, conf, adjust, no.col)
-        edges <- prepare_edges(name, pathways, conf, adjust)
+        nodes <- prepare_nodes(name, pathways, conf.level, adjust, no.col)
+        edges <- prepare_edges(name, pathways, conf.level, adjust)
         submain <- "KEGG database"
         ledges <- data.frame(label = c("Relation", "function"),
                              color = c("lightgray", "gainsboro"),
                              width = c(10, 1))
     }else{
-        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf, adjust,
-                                 no.col)
-        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols, conf,
-                                 adjust)
+        nodes <- prepare_DAnodes(DAdata, name, pathways, cols, conf.level,
+                                 adjust, no.col)
+        edges <- prepare_DAedges(DAdata[["paths"]], name, pathways, cols,
+                                 conf.level, adjust)
         submain <- "Differential activation plot"
         ledges <- data.frame(label = c("UP", "DOWN", "Both", "None", "function"),
                              color = c(cols$up, cols$down, cols$both,
@@ -1009,7 +1009,7 @@ plotVisGraphDE <- function(nodes, edges, ledges, main = "Pathway",
 #'
 DAreport <- function(DAdata, pathways, conf.level = 0.05, adjust = TRUE,
                      group_by = "pathway", colors = "classic",
-                     output_folder = NULL, path = NULL, verbose = TRUE){
+                     output_folder = NULL, path = NULL, verbose = FALSE){
 
     nodecomp <- as.data.frame(DAdata[["nodes"]])
     rownames(nodecomp) <- nodecomp$ID

@@ -115,15 +115,15 @@ Specifically, raw data has been corrected for batch effect using the
 corrected for RNA composition bias applying TMM normalization from
 package `r Biocpkg("edgeR")`, and finally log-transformed.
 
-```{r, fig.show='hold', message=FALSE, warning=FALSE}
-library(hipathia)
-data("brca")
-brca
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(devtools)
+load_all("~/appl/hipathia/")
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# library(devtools)
-# load_all("~/appl/hipathia/")
+```{r, fig.show='hold', message=FALSE, warning=FALSE}
+# library(hipathia)
+data("brca")
+brca
 ```
 
 The dataset `brca` is a `r Biocpkg("SummarizedExperiment")` object,
@@ -418,7 +418,8 @@ activity in the pathways, see Section \@ref(sec:signal) or refer to
 [Hidalgo et al.](https://www.ncbi.nlm.nih.gov/pubmed/28042959).
 
 ```{r, fig.show='hold'}
-hidata <- hipathia(exp_data, pathways, decompose = FALSE, verbose=FALSE)
+hidata <- hipathia(exp_data, pathways, uni.terms = TRUE, GO.terms = TRUE, 
+                   decompose = FALSE, verbose=FALSE)
 ```
 
 Since version `3.0`, the functional annotation is computed within the 
@@ -608,10 +609,12 @@ Function `DApathway()` uses the `r CRANpkg("visNetwork")` CRAN package to plot
 an interactive graph visualization of the changes in the activation of a 
 pathway, including node dysregulation and path dysactivation.
 
-```{r, fig.show='hold'}
+```{r, fig.show='hold', eval = FALSE}
 # Pathway visualization
 DApathway("hsa04010", pathways, DAdata) 
 ```
+
+![Decomposed subpathway depicted in red](pics/DApathway.png)
 
 Parameter `conf.level` allows to set the significant cutoff, `adjust` indicates
 whether p.values should be adjusted, `colors` allows to set the color 
@@ -1010,8 +1013,8 @@ please refer to [this
 page](https://www.uniprot.org/help/keywords_vs_go).
 
 ```{r, fig.show='hold'}
-uniprot_vals <- quantify_terms(results, pathways, dbannot = "uniprot")
-go_vals <- quantify_terms(results, pathways, dbannot = "GO")
+uniprot_vals <- quantify_terms(hidata, pathways, dbannot = "uniprot")
+go_vals <- quantify_terms(hidata, pathways, dbannot = "GO")
 ```
 
 The result of this function is a data object with the level of activity
