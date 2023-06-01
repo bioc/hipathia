@@ -52,3 +52,9 @@ Version 2.99.0 (2022-12-01)
   + Modifyng structure of objects, by creating object DAdata, which includes more information than traditional hipathia results object. This includes:
     - Activity values of nodes, paths, and selected functions
     - Extra information about the paths, nodes and functions in rowData elements of the SummarizedExperiments
+
+Version 3.0.1 (2023-06-01)
+  + Modifyng vignette to include new pipeline from version 2.99.0
+  + Changing verbose style: now the pathway names are never shown, and verbose == TRUE indicates the general steps of the function.
+  + Adding custom.terms parameter to function hipathia(), to add a custom functional annotation to be passed to quantify_terms() as parameter dbannot.
+
