@@ -93,7 +93,10 @@ hipathia <- function(genes_vals, metaginfo,
         #     cat(pathigraph$path.id, "-", pathigraph$path.name, "\n")
 
         res <- list()
-        res$nodes.vals <- nodes_values_from_genes(genes_vals, pathigraph$graph)
+        suppressWarnings(
+            res$nodes.vals <- nodes_values_from_genes(genes_vals,
+                                                      pathigraph$graph)
+        )
 
         if(decompose == FALSE){
             respaths <- all_path_values( res$nodes.vals,

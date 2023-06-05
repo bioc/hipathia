@@ -303,7 +303,7 @@ pathways_only2 <- load_pathways(species = "hsa", pathways_list = c("hsa03320",
 ```
 
 In order to know which pathways are included in each pathways object,
-function `get_pathways_list()` can be used.
+use function `get_pathways_list()`.
 
 ```{r, fig.show='hold'}
 length(get_pathways_list(pathways))
@@ -419,7 +419,7 @@ activity in the pathways, see Section \@ref(sec:signal) or refer to
 
 ```{r, fig.show='hold'}
 hidata <- hipathia(exp_data, pathways, uni.terms = TRUE, GO.terms = TRUE, 
-                   decompose = FALSE, verbose=FALSE)
+                   decompose = FALSE, verbose=TRUE)
 ```
 
 Since version `3.0`, the functional annotation is computed within the 
@@ -594,7 +594,7 @@ Function `DAtop()` provides a `tibble` for each feature with the top `n`
 differentially activated nodes, paths and functions, and plots a dot plot with
 that info. 
 
-```{r, fig.show='hold'}
+```{r, fig.show='hold', message=FALSE}
 # Top 10 altered features per class (nodes, paths, functions)
 DAtop(DAdata) 
 ```
@@ -614,7 +614,7 @@ pathway, including node dysregulation and path dysactivation.
 DApathway("hsa04010", pathways, DAdata) 
 ```
 
-![Decomposed subpathway depicted in red](pics/DApathway.png)
+![](pics/DApathway.png)
 
 Parameter `conf.level` allows to set the significant cutoff, `adjust` indicates
 whether p.values should be adjusted, `colors` allows to set the color 
@@ -628,7 +628,7 @@ the plot.
 
 *Hipathia* results can be interactively visualized on a web browser. Use 
 function `DAreport()` to create a report of the `DAdata` obtained from function
-`DAcomp()`, and function `visualize_report()` to serve the report to the 
+`DAcomp()`, and function `visualize_report()` to serve the report to a 
 browser. For the interpretation of the results in this
 visualization, see Section \@ref(sec:interpret).
 

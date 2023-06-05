@@ -58,3 +58,6 @@ Version 3.0.1 (2023-06-01)
   + Changing verbose style: now the pathway names are never shown, and verbose == TRUE indicates the general steps of the function.
   + Adding custom.terms parameter to function hipathia(), to add a custom functional annotation to be passed to quantify_terms() as parameter dbannot.
 
+Version 3.0.2 (2023-06-05)
+  + Fixing bug in vignette caused by warnings in hipathia() function
+
