@@ -57,7 +57,7 @@ analysis pipeline than the web implementation does.
 This document will introduce you to the _hipathia_ package and how to use it to
 analyze your data. 
 
-![Visual representation of the package functionalities.](pics/package_guide.png)
+<!-- ![Visual representation of the package functionalities.](pics/package_guide.png) -->
 
 <!-- The use of the package has three main steps: Data preprocessment, Pathway and function activation computation, and data analysis and visualization. -->
 
@@ -383,7 +383,7 @@ including any node in a path leading to *G*. When applied to effector
 subpathways, _hipathia_ returns the intensity of the signal arriving to the
 effector protein *G*.
 
-![Effector subpathway depicted in yellow](pics/ERBB_eff_mini.png)
+<!-- ![Effector subpathway depicted in yellow](pics/ERBB_eff_mini.png) -->
 
 Effector subpathways may have many different input nodes. In order to analyze
 in detail which of the possible paths leading to node *G* is responsible for
@@ -392,7 +392,7 @@ subpathways including only one input node. We define the
 *decomposed subpathway* from *H* to *G* as the subgraph including any node
 in a path from *H* to *G*.
 
-![Decomposed subpathway depicted in red](pics/ERBB_decomposed_mini.png)
+<!-- ![Decomposed subpathway depicted in red](pics/ERBB_decomposed_mini.png) -->
 
 
 \subsubsection{Node expression}\label{sec:nodes}
@@ -838,7 +838,7 @@ depicted in the images. The left panel is the pathways panel, where the
 currently selected pathway is shown. The layout of the pathway is similar
 to the layout shown in KEGG. 
 
-![Interactive Hipathia report visualization](pics/hipathia_report_1.png)
+<!-- ![Interactive Hipathia report visualization](pics/hipathia_report_1.png) -->
 
 
 As before, edges belonging to significant down-activated pathways are depicted
