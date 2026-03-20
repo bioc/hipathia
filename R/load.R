@@ -10,7 +10,7 @@
 
 
 get_hpannot_version <- function(){
-    return("v2")
+    return("v3")
 }
 
 
