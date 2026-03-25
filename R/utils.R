@@ -86,7 +86,7 @@ translate_ids <- function(ids, xref){
 #'
 #' @export
 #' @import SummarizedExperiment
-#' @import AnnotationHub
+#' @import zen4R
 #' @importFrom methods is
 #'
 translate_data <- function(data, species, sel_assay = 1, verbose=TRUE){
@@ -122,7 +122,7 @@ translate_data <- function(data, species, sel_assay = 1, verbose=TRUE){
 #'
 #' @return Matrix of gene expression with Entrez IDs as rownames.
 #'
-#' @import AnnotationHub
+#' @import zen4R
 #'
 translate_matrix <- function(exp, species, verbose = TRUE){
 
@@ -385,7 +385,7 @@ igraphs_upgrade <- function(metaginfo){
 #' subpathways.
 #'
 #' @export
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_pathways <- function(species, pathways_list = NULL){
     metaginfo <- load_mgi(species)
@@ -695,7 +695,7 @@ get_effpath_id <- function(node_name){
 #' get_pathways_annotations(pathway_names, pathways, "uniprot")
 #'
 #' @export
-#' @import AnnotationHub
+#' @import zen4R
 #'
 get_pathways_annotations <- function(pathway_names, metaginfo, dbannot,
                                      collapse = FALSE){
@@ -746,7 +746,7 @@ get_pathways_annotations <- function(pathway_names, metaginfo, dbannot,
 #' @return highest common ancestors
 #'
 #' #@export
-#' @import AnnotationHub
+#' @import zen4R
 #'
 get_highest_sig_ancestor <- function(go_terms, go_comp, metaginfo,
                                      unique = TRUE, pval = 0.05){

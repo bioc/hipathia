@@ -52,3 +52,6 @@ Version 2.99.0 (2022-12-01)
   + Modifyng structure of objects, by creating object DAdata, which includes more information than traditional hipathia results object. This includes:
     - Activity values of nodes, paths, and selected functions
     - Extra information about the paths, nodes and functions in rowData elements of the SummarizedExperiments
+
+Version 3.11.2 (2026-03-25)
+  + Fist version using Zenodo as repository for necessary files

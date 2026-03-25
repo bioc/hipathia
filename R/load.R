@@ -1,6 +1,6 @@
 ##
 ## load.R
-## Load objects from hpAnnot package through AnnotationHub
+## Load objects from Zenodo
 ##
 ## Written by Marta R. Hidalgo, marta.hidalgo@outlook.es
 ##
@@ -11,6 +11,37 @@
 
 get_hpannot_version <- function(){
     return("v3")
+}
+
+get_package_folder <- function(){
+  return(find.package("hipathia"))
+}
+
+#' Loads a RData object and downloads it from Zenodo if necessary
+#'
+#' @param file File name of the object to load
+#'
+#' #@examples
+#' #get_file("xref_hsa_v3.rda")
+#' #get_file("meta_graph_info_hsa_v3.rda")
+#'
+#' @return Object in the file
+#' @import zen4R
+#'
+get_file <- function(file){
+  pfold <- get_package_folder()
+  v <- get_hpannot_version()
+  filepath <- file.path(pfold, "data", v)
+  if(!file.exists(filepath))
+    dir.create(filepath)
+  files <- list.files(filepath)
+  if(!file %in% files){
+    download_zenodo("10.5281/zenodo.18268423", path = filepath,
+      files = list(file))
+  }
+  filename <- load(file.path(filepath, file))
+  x <- get(filename)
+  return(x)
 }
 
 
@@ -24,7 +55,7 @@ get_hpannot_version <- function(){
 #' #load_annofuns("uniprot", "hsa")
 #'
 #' @return Annotations object
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_annofuns <- function(db, species){
     if(!is_accepted_species(species))
@@ -33,8 +64,7 @@ load_annofuns <- function(db, species){
         stop("Database not accepted")
     v <- get_hpannot_version()
     file <- paste0("annofuns_", db, "_", species, "_", v, ".rda")
-    hp <- hub()
-    annofuns <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    annofuns <- get_file(file)
     return(annofuns)
 }
 
@@ -47,15 +77,14 @@ load_annofuns <- function(db, species){
 #' #load_mgi("hsa")
 #'
 #' @return Graph information object
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_mgi <- function(species){
     if(!is_accepted_species(species))
         stop("Species not accepted")
     v <- get_hpannot_version()
     file <- paste0("meta_graph_info_", species, "_", v, ".rda")
-    hp <- hub()
-    mgi <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    mgi <- get_file(file)
     return(mgi)
 }
 
@@ -73,7 +102,7 @@ load_mgi <- function(species){
 #' #load_pseudo_mgi("hsa", "uniprot")
 #'
 #' @return Pseudo graph information object
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_pseudo_mgi <- function(species, group_by){
     if(!is_accepted_species(species))
@@ -82,8 +111,7 @@ load_pseudo_mgi <- function(species, group_by){
         stop("Grouping not accepted")
     v <- get_hpannot_version()
     file <- paste0("pmgi_", species, "_", group_by, "_", v, ".rda")
-    hp <- hub()
-    pmgi <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    pmgi <- get_file(file)
     return(pmgi)
 }
 
@@ -96,15 +124,14 @@ load_pseudo_mgi <- function(species, group_by){
 #' #load_xref("hsa")
 #'
 #' @return Table of references
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_xref <- function(species){
     if(!is_accepted_species(species))
         stop("Species not accepted")
     v <- get_hpannot_version()
     file <- paste0("xref_", species, "_", v, ".rda")
-    hp <- hub()
-    xref <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    xref <- get_file(file)
     return(xref)
 }
 
@@ -117,15 +144,14 @@ load_xref <- function(species){
 #' #load_entrez_hgnc("hsa")
 #'
 #' @return Table of translation from HGNC to Entrez
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_entrez_hgnc <- function(species){
     if(!is_accepted_species(species))
         stop("Species not accepted")
     v <- get_hpannot_version()
     file <- paste0("entrez_hgnc_", species, "_", v, ".rda")
-    hp <- hub()
-    entrez_hgnc <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    entrez_hgnc <- get_file(file)
     return(entrez_hgnc)
 }
 
@@ -141,7 +167,7 @@ load_entrez_hgnc <- function(species){
 #' #load_annots("GO", "hsa")
 #'
 #' @return Functional annotations from HGNC to the selected database.
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_annots <- function(db, species){
     if(!is_accepted_species(species))
@@ -150,8 +176,7 @@ load_annots <- function(db, species){
         stop("Database not accepted")
     v <- get_hpannot_version()
     file <- paste0("annot_", db, "_", species, "_", v, ".rda")
-    hp <- hub()
-    annot <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    annot <- get_file(file)
     return(annot)
 }
 
@@ -162,13 +187,12 @@ load_annots <- function(db, species){
 #' #load_gobp_frame()
 #'
 #' @return GO graph information
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_gobp_frame <- function(){
-    hp <- hub()
-    v <- get_hpannot_version()
+  v <- get_hpannot_version()
     file <- paste0("go_bp_frame_", v, ".rda")
-    gbf <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    gbf <- get_file(file)
     return(gbf)
 }
 
@@ -179,23 +203,12 @@ load_gobp_frame <- function(){
 #' #load_gobp_net()
 #'
 #' @return GO graph
-#' @import AnnotationHub
+#' @import zen4R
 #'
 load_gobp_net <- function(){
-    hp <- hub()
     v <- get_hpannot_version()
     file <- paste0("go_bp_net_", v, ".rda")
-    gbn <- suppressMessages(hp[[names(hp)[hp$title == file]]])
+    gbn <- get_file(file)
     return(gbn)
 }
 
-
-# Package-global cache of the Annotation-hub() object
-hub = local({
-    hp = NULL
-    function(){
-        if(is.null(hp))
-            hp <- query(AnnotationHub(), "hpAnnot")
-        hp
-    }
-})
